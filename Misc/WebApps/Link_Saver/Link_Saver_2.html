@@ -1,0 +1,1242 @@
+<!-- I apologize for the ludicrous messyness of this source code, this was the second version of my first real webapp-->
+<!-- I reiterate. This is old. -->
+<link     rel="icon"
+		type="image/png"
+		href="http://cdn4.iconfinder.com/data/icons/cc_mono_icon_set/blacks/48x48/link.png">
+
+<script>
+/******************************************************
+STORAGE API and LINK ENGINE are (c) 2012 to BRADEN BEST
+*******************************************************/
+
+((function(){
+    console.log('Initialization Successful! Storage API is ready to use')
+    return true
+})( 
+	((function(_TYPE_,_KEY_,_DEF_,_FUNC_){
+		_SETTINGS_=arguments;$$=function(){return document.querySelectorAll.apply(document,arguments)};SKey=_KEY_;if(window[_TYPE_][SKey]){Storage=JSON.parse(window[_TYPE_][SKey]);}else{Storage=_DEF_;}UPDATE=function(){Storage['#CONFIG']['Last Save']=((function(){_D_=new Date();return _D_.toString()})())/*Save date*/;window[_TYPE_][SKey]=JSON.stringify(Storage);if(_FUNC_){_FUNC_();}return true;}
+	})(
+		/*1*/'localStorage',		/*Storage Type*/
+		/*2*/'Link Engine Data',	/*Storage Key*/
+		/*3*/{						/*Default Data*/
+			Link:{},
+			LSPAR:{
+				key:'Link',
+				list:{
+					'Link':'Link'
+				}
+			},
+			'#CONFIG':{
+				BGCOLOR:'#333',
+				PERPAGE:10,
+				RCFLAG:false
+			}
+		},							/*Run on Save*/
+		/*4*/function(){
+			try{
+				INITIALIZE()
+				ACTIVATEMENU()
+				if(OLDPAR!=Storage['LSPAR'].key||_start==1){//if the paradigm changed
+					OLDSCROLL=document.body.scrollTop
+					ONLOADWRITE(1,Storage[LSPAR.key].links-1)
+					if(_start<((Storage[LSPAR.key].links-1)-factor)){//if the show more/all links have been clicked
+						document.body.scrollTop=OLDSCROLL
+					}
+				}else{
+					ONLOADWRITE()
+				}
+			}catch(e){
+				location.reload()
+				//If it experiences an error trying to update, it will refresh
+			}
+		}
+	))
+));
+((checkDate = function(){//Part of the Bookmartket. Checks if the Last Save Date has changed and reloads if true
+    var a = Storage['#CONFIG']['Last Save'], b = JSON.parse(localStorage['Link Engine Data'])['#CONFIG']['Last Save'];
+    if(a!=b){
+        location.reload();//refreshes if stored date doesn't match the date in localStorage
+    }
+    setTimeout(checkDate,1000);
+})());
+</script>
+<script>
+SETFLAG=function(flag){//defined here because I keep getting errors with it :/
+	PARFLAG=flag
+}
+</script>
+<div menu class=hideonie id=divmenu></div>
+<div wrap id=wrapper>
+	<div id=toprow></div><br>
+	<div id=div></div>
+	<div id=loadtxt></div><!-- says Loading... when ONLOADWRITE is running-->
+    <p>Warning: This is an <B>OLD VERSION</B> of the Link Saver. For the latest version, click <a href="http://b1kmusic.koding.com/Misc/WebApps/Link_Saver_110/">here</a></p>
+</div>
+<div id=center></div><!--Invisible div the same width as wrapper used to center it via JS-->
+<script>
+IE=navigator.appName.match(/Explorer/gi)?true:false
+if(IE){
+	alert('Internet Explorer will probably not run this unless it supports JSON and Web Storage');
+}
+RCOLFLAG=0//Random background COLor FLAG//Not currently used
+/*LS VARS USED:
+Link Engine.data: Object: { 
+	X: Object: {	[Each is a Paradigm, contains links]
+		link.0:{
+			link:[link],
+			title:[title],
+			removed:[true/false],
+			starred:[true/false]
+		},
+		...
+	},
+	LSPAR: [Reserved] Object: { [Paradigm list and pointer contained here]
+		key:[key], (this controls X)
+		list:{
+			[listitem]:[listitem],
+			...
+		}
+	},
+	#CONFIG: [Reserved] Object: { [contains miscellaneous Config data]
+		property:boolean/number/string,
+		...
+	}
+	Note: Attempting to name an X object (Paradigm) "LSPAR" or "#CONFIG" will result in a failure notice. 
+	Not because there are bugs involved, but because it is reserved
+}
+*/
+document.title='Link Saver'
+LSKEY='link'//this is used IN the X Objects//Local Storage KEY
+LSPAR=Storage['LSPAR']
+if(Storage[LSPAR.key]){//Get Paradigm
+	Links=Storage[LSPAR.key]
+}else{
+	Links={}
+}
+if(Storage['#CONFIG']){//Get Config
+	Config=Storage['#CONFIG']
+}else{
+	Storage['#CONFIG']={}
+	Config={}
+}
+if(Config['RCFLAG']){
+	RCOLFLAG=true
+}
+onload=function(){
+	OLDPAR=Storage['LSPAR'].key
+	INITIALIZE=function(){
+		LSPAR=Storage['LSPAR']
+		Links=Storage[LSPAR.key]
+		links=Links[LSKEY+'s']||1
+		Config=Storage['#CONFIG']
+		PP=Config['PERPAGE']
+	}
+	try{//stop firefox keeping the input values
+		isearch.value=''
+		ititlem.value=''
+		ilinkm.value=''
+		ipar.value=''
+	}catch(e){}
+	try{
+		if(sessionStorage['Scroll']){
+			scr=JSON.parse(sessionStorage['Scroll'])
+		}
+		document.body.scrollLeft=scr[0]
+		document.body.scrollTop=scr[1]
+	}catch(e){}
+	if(LSPAR.key==''){//this is a last resort for when the script tries to load paradigm "" (empty string)
+		LSPAR.key=sessionStorage.lastParadigm//bounce back from paradigm ""
+		alert('You would have seen this anyway, so I will just tell you what just happened so you don\'t panic\n\na glitch just happened causing the paradigm to be set as "" (an empty string).\n\nThis is not a big deal, since you can just go to the paradigm list and get right back to your paradigm, but if this caught me off guard during development, the user would panic.\n\nLucky for you, I\'m not a lazy developer\n\nBouncing back to '+LSPAR.key+'...')
+		UPDATE()
+	}
+	ADVANCED_SEARCH=function(QUERY){
+		QUERY=QUERY||isearch.value
+		resultbox.innerHTML=''
+		if(QUERY==''){
+			resultbox.innerHTML='Type into the searchbar to search'
+			return false
+		}
+		try{//this fix builds the results a second time with a slightly different algorithm
+			tracker=0
+			results=[]
+			for(i in Storage){
+				if(JSON.stringify(Storage[i]).match(RegExp(QUERY,'gi'))){
+					for(i2 in Storage[i]){
+						try{
+							if(Storage[i][i2].title.match(RegExp(QUERY,'gi'))){
+								results[tracker]={link:Storage[i][i2],par:i}
+								tracker++
+							}else{
+								results[tracker]='No'
+								tracker++
+							}
+						}catch(e){}
+					}
+				}
+			}
+			resultbox.innerHTML=''
+			for(i in results){
+				if(results[i]!='No'){
+					//resultbox.innerHTML+='<hr><span id=resultlist title="'+results[i].par+'">'+results[i].par+'</span><br>'+getFavicon(results[i].link.link)+'<a target="_BLANK" href="'+results[i].link.link+'">'+((results[i].link.title.length>50)?(results[i].link.title.replace(results[i].link.title,(RegExp('(.{50})').exec(results[i].link.title)[1]))+'...'):(results[i].link.title))+'</a>'
+					resultbox.innerHTML+='<hr><span id=resultlist title="'+results[i].par+'">'+results[i].par+'</span><br>'+getFavicon(results[i].link.link)+'<a target="_BLANK" href="'+results[i].link.link+'" class="search_results">'+results[i].link.title+'</a>'
+					//Opted for CSS ellipses
+				}
+			}
+			resultbox.innerHTML=resultbox.innerHTML.replace('<hr>','')
+			try{
+				resultClick=function(e){
+					if(e.target.innerText!=''){//so it doesn't go to paradigm "", and freak the user out
+						Storage['LSPAR'].key=e.target.innerText
+						UPDATE()
+					}
+				}
+				for(i in resultlist){
+					resultlist[i].onclick=resultClick
+				}
+			}catch(e){
+				try{//nested try..catch tends to be more reliable than try..catch..finally
+					resultlist.onclick=resultClick
+				}catch(e){}
+			}
+			_bool_res=false//begin on false; if for loop can't change it, there are no results
+			//bool res = boolean results
+			for(i in results){
+				if(results[i]!='No'){
+					_bool_res=true//if there is at least ONE index in results that has data, there are results
+				}
+			}
+			if(!_bool_res){//if no results
+				resultbox.innerHTML='No results match your term'
+			}
+		}catch(E){
+			resultbox.innerHTML='One or more errors were generated. Press F12 (Webkit and IE only) to view them<br>'+resultbox.innerHTML
+			console.error('Nonfatal Error (don\'t freak out)\n\n'+E+'\n\nThis was the error that ocurred\n\nI tried to get your result--I really did--but something went horribly wrong somehow.\n\nBe careful with regular expressions, you could have put a backslash (\\) which is the escape symbol in regex.\nIf that is the case, just remove the backslash; the error isn\'t fatal')
+		}//catch regex errors so they dont break the page
+	}
+	ACTIVATEMENU=function(){
+		divmenu.innerHTML=(//just bite the bullet and rewrite entire menu
+			'<div item>'+
+				'Search'+
+				'<div content>'+
+					'<div id=searchbox>'+
+						'<input placeholder="Enter your search term here" id=isearch class=inp style="width:700px" value=""><hr>'+
+						'Type your search term here and press Enter to go to first one.<br>'+
+						'If there is a match I will automatically go the the paradigm<hr>'+
+						'You can use <a target="_BLANK" href="http://en.wikipedia.org/wiki/Regex">regular expressions</a>.<a style="font:10px arial black;">Use a <b title="Click to insert" style="color:blue;cursor:hand" onclick="isearch.value=\'.\';isearch.onkeyup()">period</b>, for example, to display every link from every paradigm</a><hr>'+
+						'<div id=resultbox>Results will appear here</div>'+
+					'</div>'+
+				'</div>'+
+			'</div>'+
+			'<div item>'+
+				'Add New Link'+
+				'<div content>'+
+					'<div id=addbox>'+
+						'<span column>Link</span><input placeholder="http://www.example.com/" id=ilinkm class=inp value=""><br>'+
+						'<span column>Title</span><input placeholder="Example" id=ititlem class=inp value=""><hr>'+
+						'Fill out the form and press Enter to add a new link.<hr>'+
+						'Alternatively, you can use this bookmarklet on any webpage, <a href="javascript:var a=location.href,b=document.title;window.open(\'http://b1kmusic.koding.com/Misc/WebApps/Link_Saver/Forms/AddLink.html?url=\'+a+\'&title=\'+b+\'\',\'\',\'height=250,width=300,scrollbars=no\');">Add Link</a>'+
+					'</div>'+
+				'</div>'+
+			'</div>'+
+			'<div item onmouseover="SETFLAG(\'EDIT\')">'+
+				'Add/Change Paradigm'+
+				'<div content>'+
+					'<div id=chaparbox>'+
+						'<div id=chaparlist class=parlist></div>'+
+						'<span column style="margin-top:0px;">Paradigm</span><input placeholder="Enter paradigm here" id=ipar class=inp value=""><hr>'+
+						'Select or type a paradigm to change the set of links'+
+					'</div>'+
+				'</div>'+
+			'</div>'+
+			'<div item onmouseover="SETFLAG(\'REMOVE\')">'+
+				'Remove Paradigm'+
+				'<div content>'+
+					'<div id=remparbox>'+
+						'<div id=remparlist class=parlist></div><hr>'+
+						'Select a paradigm from the list to remove it'+
+					'</div>'+
+				'</div>'+
+			'</div>'+
+			'<div item end>'+
+				'Other'+
+				'<div content id=oc>'+
+					'<div id=botrow><input clr type=button value="Clear" onclick="javascript:CLEAR();void(0);">'+
+						'<span vr></span>'+
+						'<div bottomlinks id=botlinks>'+
+							'[<a href="javascript:ADDLINK();void(0)" title="[CTRL+SHIFT++] Unhide last link">+</a>] '+
+							'[<a href="javascript:SUBLINK();void(0)" title="[CTRL+SHIFT+-] Hide last link">&ndash;</a>] '+
+							'[<a href="javascript:SWAPLINKS();void(0)" title="[CTRL+SHIFT+S] Swap Two Links. You can also drag them">S</a>] '+
+						'</div>'+
+					'</div><hr>'+
+					'<span column style="width:200px">links</span><span vr style="margin-right:20px"></span><span id=utilinfo1></span><br>'+
+					'<span column style="width:200px">Background</span><span vr style="margin-right:20px"></span><div id=bgprev style="width:20px;height:20px;display:inline-block;background:#333;border:2px solid #eee;position:relative;top:6px;cursor:pointer;" title="Click to change"></div><br>'+
+					'<span column style="width:200px">Per Page setting</span><span vr style="margin-right:20px"></span><span id=utilinfo3></span> [<a href="javascript:CHANGEPERPAGE();void(0)">Change</a>]'+
+					'<hr><span copyright>&copy; 2012 Braden "B1K" Best</span><hr divitem2>'+
+				'</div>'+
+			'</div>'
+		)
+		/*Vars for Other Tab*/
+		try{
+			document.body.style.background=bgprev.style.background=Storage['#CONFIG']['BGCOLOR']
+		}catch(e){
+			try{
+				document.body.style.background=bgprev.style.background='#333'
+			}catch(e){}
+		}
+		/*Search Tab*/
+		isearch.onkeydown=function(e){//isearch=Input SEARCH
+			e=e||event
+			if(e.keyCode==13){//Enter
+				SEARCH(isearch.value)
+			}else if(e.keyCode==16){//Shift
+				ADVANCED_SEARCH()
+			}
+		}
+		isearch.onkeyup=function(e){//better handling; no lag
+			if(isearch.value.length<3 && e.keyCode!=16 && isearch.value.length!=0){
+				resultbox.innerHTML='Press Shift to search'
+				return false
+			}else{
+				ADVANCED_SEARCH()
+			}
+		}
+		/*Add Link Tab*/
+		ilinkm.onkeydown=ititlem.onkeydown=function(e){//ititlem=input title (menu)
+			e=e||event
+			if(e.keyCode==13){
+				try{
+					if(!ititlem.value){ititle2=ilinkm.value}else{ititle2=ititlem.value}
+					Links[LSKEY+'.'+links]={link:ilinkm.value,title:ititlem.value,removed:false}
+					Links[LSKEY+'.'+links].title=ititle2
+					Links[LSKEY+'s']=parseInt(links)+1
+					Storage[LSPAR.key]=Links
+					UPDATE()
+				}catch(e){
+					alert('An Error ocurred.')
+					location.reload()
+				}
+			}
+		}
+		/*Add/Change and Remove Paradigm Tabs*/
+		lslistHTML=''
+		for(i in LSPAR.list){
+			if(LSPAR.list[i]==LSPAR.key){
+				lslistHTML+='<a id=listitem selected>'+LSPAR.list[i]+'</a>'
+			}else{
+				lslistHTML+='<a id=listitem>'+LSPAR.list[i]+'</a>'
+			}
+			//add number
+			try{
+				lslistHTML+='<span parnum>('+(Storage[LSPAR.list[i]].links-1)+')</span><br>'
+			}catch(e){
+				lslistHTML+='<span parnum>(0)</span><br>'
+			}
+		}
+		PARFLAG='EDIT'
+		chaparlist.innerHTML=lslistHTML+'<hr>'
+		remparlist.innerHTML=lslistHTML
+		ipar.onkeydown=function(e){
+			e=e||event
+			if(e.keyCode==13){
+				if(ipar.value=='LSPAR'||ipar.value=='#CONFIG'){//Stop that sonofabitch from using LSPAR
+					alert('Can not create paradigm "'+ipar.value+'"\n\nReason: While technically possible without glitches, '+ipar.value+' is a reserved key.\n\nBasically, the object would get ugly, and may cause bugs. So don\'t do it!\n\nIf you MUST have it as a paradigm, then vary the capitalization of insert spaces, Underscores, or generally any ASCII character (I didn\'t impose limits ;D)\n\nCurrent reserved list:\nLSPAR\n#CONFIG')
+					location.reload()
+					return false
+				}
+				LSPAR.key=ipar.value
+				LSPAR.list[ipar.value]=ipar.value
+				Storage['LSPAR']=LSPAR
+				UPDATE()
+			}
+		}
+		if(listitem[1]){//so it only works with multiple items
+			for(i in listitem){
+				listitem[i].onclick=function(e){
+					e=e||event
+					if(PARFLAG=='EDIT'){
+						LSPAR.key=e.target.innerHTML
+						LSPAR.list[e.target.innerHTML]=e.target.innerHTML
+						Storage['LSPAR']=LSPAR
+						UPDATE()
+					}else if(PARFLAG=='REMOVE'){
+						if(!confirm('Are you sure you want to delete this paradigm?')){return false}
+						try{
+							li=LSPAR.list[e.target.innerHTML]
+							delete Storage[e.target.innerHTML]
+							delete LSPAR.list[e.target.innerHTML]
+							if(li==LSPAR.key){
+								for(i in LSPAR.list){
+									newkey=LSPAR.list[i]
+								}
+								LSPAR.key=newkey
+							}
+							Storage['LSPAR']=LSPAR
+							UPDATE()
+						}catch(e){
+							alert('Bad selection')
+						}
+					}
+				}
+			}
+		}
+		/*Other Tab*/
+		oc.innerHTML=(
+			'<div id=botrow><input clr type=button value="Clear" onclick="javascript:CLEAR();void(0);">'+
+				'<span vr></span>'+
+				'<div bottomlinks id=botlinks>'+
+					'[<a href="javascript:ADDLINK();void(0)" title="[CTRL+SHIFT++] Unhide last link">+</a>] '+
+					'[<a href="javascript:SUBLINK();void(0)" title="[CTRL+SHIFT+-] Hide last link">&ndash;</a>] '+
+					'[<a href="javascript:SWAPLINKS();void(0)" title="[CTRL+SHIFT+S] Swap Two Links. You can also drag them">S</a>] '+
+				'</div>'+
+			'</div><hr>'+
+			'<span column style="width:200px">links</span><span vr style="margin-right:20px"></span><span id=utilinfo1></span><br>'+
+			'<span column style="width:200px">Background</span><span vr style="margin-right:20px"></span><div id=bgprev style="width:20px;height:20px;display:inline-block;background:#333;border:2px solid #eee;position:relative;top:6px;cursor:pointer;" title="Click to change"></div><br>'+
+			'<span column style="width:200px">Per Page setting</span><span vr style="margin-right:20px"></span><span id=utilinfo3></span> [<a href="javascript:CHANGEPERPAGE();void(0)">Change</a>]<hr>'+
+			'[<a href="javascript:BACKUPRESTORE();void(0)">Backup/Restore</a>]'+
+			//BACKUP AND RESTORE
+			'<div id=FRAME></div><hr>'+
+			'<span copyright>Link Saver &copy; 2012-2013 Braden Best</span>'
+		)
+		BACKUPRESTORE=function(){
+			FRAME.style.display='none'
+			FRAME.innerHTML='<iframe name=_frame style="width:100%;height:90%"></iframe><br><br>[<a href="javascript:FRAME.style.display=\'none\';void(0)">Close</a>]'
+			FRAME.style.background='#ccc'
+			FRAME.style.padding='0px'
+			FRAME.style.position='fixed'
+			FRAME.style.top='0px'
+			FRAME.style.left='0px'
+			FRAME.style.width='100%'
+			FRAME.style.height='100%'
+			FRAME.style.display='block'
+			frames['_frame'].document.body.innerHTML=(
+				'<div id=txtcount></div>'+
+				'<textarea placeholder="Paste Data here and press Enter to Restore"></textarea>'+
+				'<br>Your User Data has been generated in the above box'+
+				'<br>Copy the text as a backup, or paste existing data into the textbox and hit Enter'+
+				'<style>'+
+				'textarea{background:#eee;width:100%;height:90%;}'+
+				'</style>'
+			)
+			$$$=function(){
+				return frames['_frame'].document.querySelectorAll.apply(frames['_frame'].document,arguments)
+			}
+			txt=$$$('textarea')[0]
+			txtcount=$$$('div')[0]
+			TXTCOUNT=txt.onkeyup=function(){
+				txtcount.innerHTML='Characters found: '+txt.value.length+' ('+(txt.value.length/1000000).toString().split(/([0-9][.][0-9]{2})/)[1]+'/5MB used in localStorage)'
+			}
+			if(localStorage[SKey]){
+				txt.value=JSON.stringify(Storage)
+			}
+			TXTCOUNT()
+			frames['_frame'].onkeydown=frames['_frame'].onkeyup=function(e){
+				if(e.keyCode==13){
+					localStorage[SKey]=txt.value
+					location.reload()
+				}
+			}
+		}
+		try{
+			bgprev.onclick=function(){
+					cc='333'//current color; default at default
+					if(Storage['#CONFIG']){
+						if(Storage['#CONFIG']['BGCOLOR']){
+							cc=Storage['#CONFIG']['BGCOLOR'].replace('#','')
+						}
+					}else{
+						Storage['#CONFIG']={}
+					}
+				Storage['#CONFIG']['BGCOLOR']='#'+prompt('type the color in 3-digit hex format (eee=14 red, 14 green, and 14 blue, which is the color of a starred link)',cc)
+				UPDATE()
+			}
+		}catch(e){}
+		try{
+			utilinfo1.innerHTML=Storage[LSPAR.key][LSKEY+'s']-1
+			if(utilinfo1.innerHTML=='NaN'){
+				utilinfo1.innerHTML=0
+			}
+		}catch(e){
+			utilinfo1.innerHTML=0
+		}
+		utilinfo3.innerHTML=Storage['#CONFIG']['PERPAGE']||10
+		bgprev.style.background=Storage['#CONFIG']['BGCOLOR']
+	}
+	ACTIVATEMENU()
+	CHANGEPERPAGE=function(){
+		num=parseInt(prompt('Type a new number for the perpage setting. Note that this will refresh the page',Storage['#CONFIG']['PERPAGE']||10))
+		if(isNaN(num)){
+			alert('Not a number')
+			return false
+		}
+		Storage['#CONFIG']['PERPAGE']=num
+		UPDATE()
+		location.reload()
+	}
+	ADD=function(){
+		__LINK=prompt('Enter The Link')
+		__TITLE=prompt('Enter The Title',__LINK)
+		alert('For future reference, links can be added through the menu on the top')
+		Storage[LSPAR.key]['link.'+links]={link:__LINK,title:__TITLE}
+		Storage[LSPAR.key]['links']=links+1
+		UPDATE()
+	}
+	SEARCH=function(search){
+		LOCATION=''
+		for(i in Storage){
+			if(Storage[i]!='LSPAR'&&Storage[i]!='#CONFIG'){
+				if(JSON.stringify(Storage[i]).match(RegExp(search,'gi'))){
+					LOCATION=i
+					break;
+				}
+			}
+		}
+		if(LOCATION){
+			LSPAR.key=LOCATION
+			UPDATE()
+		}else{
+			alert('No Matches Found')
+		}
+	}
+	EDIT=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.link=prompt('Enter New Link',LINK.link)
+		LINK.title=prompt('Enter New Title',LINK.title)
+		Links[LSKEY+'.'+KEY]=LINK
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	STAR=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.starred=true
+		Links[LSKEY+'.'+KEY]=LINK
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	UNSTAR=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.starred=false
+		Links[LSKEY+'.'+KEY]=LINK
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	REMOVE=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.removed=true
+		Links[LSKEY+'.'+KEY]=LINK
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	RESTORE=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.link=prompt('Enter New Link',LINK.link)
+		LINK.title=prompt('Enter New Title',LINK.title)
+		LINK.removed=false
+		Links[LSKEY+'.'+KEY]=LINK
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	PERMADEL=function(KEY){
+		if(KEY<(links-1)){//if not at top...
+			if(!confirm('To be deleted, this must be at the top position. Swap now?')){//if cancel
+				return false
+			}
+			l1=KEY
+			l2=links-1
+			link1=Links['link.'+l1]
+			link2=Links['link.'+l2]
+			Links['link.'+l1]=link2
+			Links['link.'+l2]=link1
+			Storage[LSPAR.key]=Links
+			UPDATE()
+			return false
+		}
+		if(!confirm('Are you sure you want to PERMANENTLY DELETE the link, "'+(Links[LSKEY+'.'+KEY].title)+'" (#'+KEY+')?\n\nYou CANT get this back.')){return false}
+		delete Links[LSKEY+'.'+KEY]
+		Links[LSKEY+'s']=Links[LSKEY+'s']-1
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	ADDLINK=function(){
+		Links[LSKEY+'s']=Links[LSKEY+'s']+1
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	SUBLINK=function(){
+		Links[LSKEY+'s']=Links[LSKEY+'s']-1
+		Storage[LSPAR.key]=Links
+		UPDATE()
+	}
+	CLEAR=function(){
+		if(!confirm('This will delete all the Data.\nTo delete only this paradigm, use the Remove Paradigm Tab\n\nAre you Sure you want to clear all Data?')){
+			return false
+		}else if(!confirm('Are you SURE?')){
+			return false
+		}
+		localStorage.removeItem(SKey)
+		location.reload()
+	}
+	SWAPLINKS=function(){
+		alert('click the two links you want to swap')
+		onclick=function(e){
+			l1=e.target.title
+			onclick=function(e){
+				l2=e.target.title
+				if(l1!=l2 && l1!='' && l2!='' && l1.match(/[0-9]*/) && l2.match(/[0-9]*/)){
+					if(!confirm('Data received:\n'+Links['link.'+l1].title+'('+l1+')\n'+Links['link.'+l2].title+'('+l2+')\n\nProceed?')){return false}
+					link1=Links['link.'+l1]
+					link2=Links['link.'+l2]
+					Links['link.'+l1]=link2
+					Links['link.'+l2]=link1
+					Storage[LSPAR.key]=Links
+					UPDATE()
+				}else{
+					location.reload()
+				}
+			}
+		}
+	}
+	SETDESC=function(){
+		desc=prompt('Type a short description for this paradigm',Storage[LSPAR.key]['description']||'')
+		if(desc){
+			Storage[LSPAR.key]['description']=desc
+			UPDATE()
+		}else{
+			alert('No description was set')
+			return false
+		}
+	}
+	links=Links[LSKEY+'s']||1//it starts at 1, but unfortunately, the links var will always be one more than the actual length as consequence of starting the loop at i=1
+		//The best way to think of it is this:
+		//the links variable represents the next link to be written. So if links is 4, that
+		//means when you save a link, it will be link.4
+	//WRITE START
+	l=links-1
+	//factor=10//factor to hide by
+	factor=Storage['#CONFIG']['PERPAGE']||10
+	if(l>=factor){//if links are greater than or equal to factor...
+		initial=(l-l%factor)//allows intervals of factor, e.g. if you have 26 links, 26-26%10(which is 6)=20, so the initial startpoint is set to 20, and the links shown initially are 20 thru 26
+		delete l//just for efficiency
+	}else{
+		initial=1
+	}
+	getFavicon=function (url){//utilize this in ONLOADWRITE to write the favicon of each link to the left of link
+		Ximg='http://upload.wikimedia.org/wikipedia/commons/thumb/3/31/ProhibitionSign2.svg/200px-ProhibitionSign2.svg.png'
+		IMGERR=function(pic){
+			pic.src=Ximg
+		}
+		try{
+			//return '<img src="'+'http://'+RegExp('https?://(.*\.?.*\..*)/').exec(url)[1]+'/favicon.ico'+'"/>'
+			if(url.match('encyclopediadramatica')){//special cases. ED is only special case so far
+				return '<img src="https://images.encyclopediadramatica.se/2/26/Favicon.png">'//get ED's favicon
+			}else{
+				return '<img onerror="IMGERR(this)" src="'+'http://'+RegExp('https?://([^/]*)/').exec(url)[1]+'/favicon.ico'+'"/>'
+				//return '<img onerror="IMGERR(this)" src="'+'http://'+RegExp('https?://(.*)/').exec(url)[1]+'/favicon.ico'+'"/>'
+			}
+		}catch(e){
+			return '<img src="'+Ximg+'"/>'//X
+		}
+		//http:// or https://, then www.google.com/ or google.com/, must have "/" at end to be valid (i.e. properly formatted)
+	}
+	PP=Config['PERPAGE']
+	ONLOADWRITE=function(start,end,mem_takeaway){
+		if(PP>=links){//if the amount of links to be displayed exceeds the amount of links that exist
+			PP=links-1//set amount displayed to links, adjusted as necessary
+		}
+		start=_start=start||initial||1
+		end=end||links-1
+		mem_takeaway=mem_takeaway||0
+		div.style.display='none'
+		div.innerHTML=''
+		loadtxt.innerHTML='<center style="font-size:30px;">LOADING...</center>'
+		document.title='Loading...'//if it takes a while, title visibly changes to say "loading..."
+		//for(i=1;i<links;i++){//original loop; offset to 1 instead of 0
+		//for(i=start;i<(end+1);i++){//loop starts at "start" to allow the hide feature, end allows potential page feature. The bug with this one was that after reaching links%perpage, the amount of links shown would cut down to 1, instead of showing a crop of the links--my original intention
+		for(i=links-PP;i<links;i++){//This actually writes [PERPAGE] amount of links, instead of cutting to 1 after reaching links%PERPAGE. THIS actually performs my intention by showing a "crop" of the links, always starting from the end
+			try{
+				LINK=Links[LSKEY+'.'+i]
+				if(!LINK.removed){
+					div.innerHTML=(
+						'<hr><p link class="'+(LINK.starred?'starred':'')+'" title="'+i+'" draggable=true>'+
+						'<span varr title="'+i+'">&varr;</span><small>'+i+(LINK.starred?'*':'')+'</small> '+
+						getFavicon(LINK.link)+
+						'<a link target="_blank" href="'+LINK.link+'">'+LINK.title+'</a> '+
+						'[<a href="javascript:EDIT('+i+');void(0)">EDIT</a>] '+
+						'[<a href="javascript:'+(LINK.starred?'UN':'')+'STAR('+i+');void(0)">'+(LINK.starred?'UN':'')+'STAR</a>] '+
+						'[<a href="javascript:REMOVE('+i+');void(0)">REMOVE</a>]'+
+						'</p>'
+					)+div.innerHTML
+				}else{//removed flag set to true
+					div.innerHTML=(
+						'<hr><p link title="'+i+'" draggable=true>'+
+						'<span varr title="'+i+'">&varr;</span><small>'+i+'</small> '+
+						'<b link>REMOVED</b> '+ 
+						'[<a href="javascript:RESTORE('+i+');void(0)">RESTORE</a>]'+
+						'[<a href="javascript:PERMADEL('+i+');void(0)" title="permanently deletes link">DELETE</a>]'+
+						'</p>'
+					)+div.innerHTML
+				}
+			}catch(e){
+				div.innerHTML=(
+					'<hr><p link>No Data</p>'
+				)+div.innerHTML
+			}
+		}
+		//if(start!=1){//so user can't hit "show more" or "show all" when the links are already maxed out
+			//div.innerHTML+='<hr>[<a href="javascript:secondRun=true;ONLOADWRITE('+(start-(start==factor?factor-1:factor))/*20-10=10, 10 is new startpoint; 10==factor, so next run would subtract 1, so 10-(10-1(9))=1*/+')">Show more</a>] [<a href="javascript:ONLOADWRITE(1);void(0)">Show all</a>]'
+		//}
+		if(links>=PP&&(PP!=links-1)){//part of the neo page system
+			div.innerHTML+='<hr>[<a href="javascript:secondRun=true;PP+='+Config.PERPAGE+';ONLOADWRITE();">Show More</a>][<a href="javascript:PP=links-1;ONLOADWRITE()">Show All</a>]'
+		}
+		try{//avoid errors; this is the scroll auto-load functionality
+			if(!sessionStorage.allowScroll&&secondRun){//so user isn't automtically attacked by this
+				//sessionStorage.allowScroll=confirm('Do you want to automatically load more links on scroll?')
+				sessionStorage.allowScroll=true
+			}
+			if(start>1&&sessionStorage.allowScroll=='true'){//so this doesnt fire after reaching end
+				scrollTop=document.body.scrollTop//remember old scroll position
+				document.body.onscroll=function(){
+					try{
+						scrollFactor=Storage['#CONFIG'].PERPAGE*10+(Storage['#CONFIG'].PERPAGE*10/2)
+					}catch(e){scrollFactor=150}
+					if(document.body.scrollTop>scrollTop&&document.body.scrollTop-scrollTop>scrollFactor){//if scrolled down by 100
+						loadmore=function(){ONLOADWRITE(start-(start==factor?factor-1:factor))}
+						setTimeout(loadmore,250)// 1/4 second
+					}
+					//alert(div.scrollTop-scrollTop)
+				}
+			}else{
+				div.onscroll=null
+			}
+		}catch(e){}
+		prevpage='[<a href="javascript:ONLOADWRITE('+(start+(start==factor?factor:factor-1))+','+(end+mem_takeaway)+');void(0)">Last Page</a>]'
+		nextpage='[<a href="javascript:ONLOADWRITE('+(start-(start==factor?factor-1:factor))+','+(end%factor>0?end-end%factor:end-factor)+','+(end%factor>0?end%factor:factor)+');void(0)">Next Page</a>]'
+		//BEGIN Page buttons
+		try{
+			if(links-1>=factor){
+				linknav.innerHTML=''
+			}
+			if(end<links-1 && start>1){//for both buttons
+				linknav.innerHTML+=prevpage+nextpage
+			}else if(end<links-1){//for last page
+				linknav.innerHTML+=prevpage
+			}else if(start>1){//for next page
+				linknav.innerHTML+=nextpage
+			}
+		}catch(e){}
+		/*
+		END Page Buttons
+		The logic needs some work :/
+		The onload write can be experimented with in a console using ONLOADWRITE([start], [end])
+		*/
+		div.innerHTML=div.innerHTML.replace('<hr>','')
+		document.title=LSPAR.key+' Saver'
+		//if(links==0){
+		if(!Links[LSKEY+'.'+1]&&links<2){//if no first link
+			div.innerHTML='<h1 fresh>No Links<hr><a href="javascript:ADD();void(0)">Add One</a></h1>'
+			if(LSPAR.key=='Link'){//this probably means that the user is new and needs a tutorial
+				wrapper.style.width='700px'
+				wrapper.style.top='50px'
+				toprow.innerHTML='<center>'+toprow.innerHTML+'<h1>Welcome to the Link Saver App</h1><hr>Use the above options to add links, and to change and remove link sets</center>'
+				searchbox.innerHTML='<center>Add a Link To Activate this functionality</center>'
+				chaparbox.innerHTML='<center>Add a Link To Activate this functionality</center>'
+				remparbox.innerHTML='<center>Add a Link To Activate this functionality</center>'
+				toprow.style.opacity=1
+			}else{
+				toprow.innerHTML='<center>'+toprow.innerHTML+'</center>'
+			}
+		}
+		listlength=0
+		for(i in LSPAR.list){
+			listlength++
+		}
+		if(listlength<2){
+			remparbox.innerHTML='<center>Add a Paradigm to activate this functionality</center>'
+		}
+		document.title=LSPAR.key+' Saver'
+		if(!sessionStorage.dismiss){//this allows a non permanent dismissal
+			div.innerHTML+='<hr b>'
+			dismiss=' [<a href="javascript:sessionStorage.dismiss=true;location.reload()" title="Clicking this dismisses the message for the entire session. To &quot;undismiss&quot; this, close the tab and re open this ">Dismiss</a>]'
+			if(Storage[LSPAR.key]['description']){
+				div.innerHTML+='Description: '+Storage[LSPAR.key]['description']+' [<a href="javascript:SETDESC();void(0)">Change</a>]'+dismiss
+			}else{
+				div.innerHTML+='No description has been set for this paradigm. <a href="javascript:SETDESC();void(0)">Set one?</a>'+dismiss
+			}
+		}
+		if(!navigator.appVersion.match(/Webkit/gi)){//if not a webkit browser, then this will return true
+			document.getElementById('div').innerHTML+='<hr>This app is very buggy in Firefox. Use it in a <a href="http://en.wikipedia.org/wiki/List_of_web_browsers#WebKit-based">webkit</a> browser'
+		}
+		div.style.display='block'//Optimization for write speed
+		//as an example, this reduces time for [Show all] on a paradigm with 25 links from 600ms to 228ms
+		//That is 38% of 600; a 263.15% improvement
+		loadtxt.innerHTML=''
+		//Added Loading... Text so that it's more obvious what's going on
+	}
+	ONLOADWRITE()
+	//WRITE END
+	genC=function(l){//Generates random characters for topbutton animations
+		return gen(l,'QWERTYUIOPASDFGHJKLZXCVBNM')
+	}
+	gen=function(l,chars){//Generates random characters
+		R=function(){return Math.floor(Math.random()*10).toString()}
+		R2=function(){return parseInt(R()+R())}
+		l=l||10
+		chars=chars||'0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_-'
+		str=''
+		for(i=0;i<l;i++){
+			str+=chars[R2()]||chars[R2()]||chars[R2()]||chars[R2()]||chars[R2()]||chars[0]
+		}
+		return str
+	}
+	TOGGLERCOL=function(){//TOGGLE Random COLor flag
+		Config['RCFLAG']=Config['RCFLAG']?false:true
+		Storage['#CONFIG']=Config
+		UPDATE()
+	}
+	map={}
+	onkeydown=onkeyup=function(e){
+		map[e.keyCode]=e.type=='keydown'?true:false
+		if(map[17]&&map[16]&&map[83]){//CTRL+SHIFT+S
+			SWAPLINKS()
+			map={}
+			return false
+		}else if(map[17]&&map[16]&&map[66]){//CTRL+SHIFT+B
+			TOGGLERCOL()
+			map={}
+			return false
+		}else if(map[17] && map[16] && (map[187] || (navigator.appName.match(/Netscape/gi)&&map[61]))){//CTRL+SHIFT++
+			ADDLINK()
+			map={}
+			return false
+		}else if(map[17] && map[16] && (map[189] || (navigator.appName.match(/Netscape/gi)&&map[173]))){//CTRL+SHIFT+-
+			SUBLINK()
+			map={}
+			return false
+		}
+	}
+	ondragover=function(e){//to allow the drop
+		return false
+	}
+	ondragstart=function(e){
+		l1=e.target.title
+	}
+	ondragenter=function(e){
+		l2=e.target.title
+	}
+	ondrop=function(e){//yay drag n drop
+		if(l1!=l2 && l1!='' && l2!='' && l1.match(/[0-9]*/) && l2.match(/[0-9]*/)){
+			link1=Links['link.'+l1]
+			link2=Links['link.'+l2]
+			Links['link.'+l1]=link2
+			Links['link.'+l2]=link1
+			Storage[LSPAR.key]=Links
+			UPDATE()
+		}
+	}
+	RCOL=function(){//random color
+		R=function(){return Math.floor(Math.random()*10)}//0-9
+		cols=['#335','#337','#353','#373','#533','#733','#377','#ccc','#333','#aaa']
+		document.body.style.backgroundColor=GLOBALVARIABLE_RANDOMCOLOR=cols[R()]
+	}
+	RCOLFLAG?RCOL():null
+	CENTER=function(){
+		wrapper.style.left=center.offsetLeft//Center Main Content
+		divmenu.style.left=center.offsetLeft//Center Top Menu
+	}
+	CENTER()
+	setInterval(CENTER, 1000)
+	//Center Every Second; since the function is so simple, lag is inconceivable
+}
+</script>
+<style>
+div#center{/*Invisible div used to indirectly center menu and wrap*/
+	margin:0px auto; /*Position is not absolute, so it can be centered*/
+	width:724px;/*Javascript > Wrapper.offsetWidth => 724*/
+}
+span[parnum]{
+	color:#999;
+}
+div[menu]{
+	border:2px solid #000;
+	width:718px;
+	position:fixed;
+	top:0px;
+	z-index:19;
+	box-shadow:#000 2px 3px 3px;
+	background:#aaa;
+}
+div[item], div[item2]{
+	background:#aaa;
+	cursor:pointer;
+	padding:10px;
+	display:inline-block;
+	margin:0 -5px 0 0;
+}
+
+div[item][end]{
+	padding-right:24px;
+	padding-left:27px;
+	padding-right:24px;/*Linux Fix*/
+	padding-left:24px;
+}
+div[item]:hover{
+	background:#ccc;
+}
+div[item2]{
+	background:#ccc;
+	margin-left:-10px;
+	margin-bottom:-10px;
+}
+div[item2]:hover{
+	background:#ddd;
+}
+div[item]:hover div[content], div[item2]:hover div[content2]{
+	display:block;
+}
+div[item2],hr[divitem2]{
+	display:none;
+}
+div[content], div[content2]{
+	background:#ccc;
+	position:absolute;
+	width:698px;
+	padding:10px;
+	left:-2px;
+	top:43px;
+	display:none;
+	border-top:0px solid transparent;
+	border-right:2px solid #000;
+	border-bottom:2px solid #000;
+	border-left:2px solid #000;
+	box-shadow:#000 2px 2px 3px;
+	cursor:auto;
+}
+div[content2]{
+	top:274px;
+	background:#ddd;
+	-webkit-transition:top .5s;
+}
+div[content2]:hover{
+	top:220px;
+}
+a.search_results{
+	max-width:500px;
+	text-overflow:ellipsis;
+	overflow:hidden;
+	display:inline-block;
+	white-space:nowrap;
+}
+span[column]{
+	display:inline-block;
+	width:100px;
+}
+.inp{
+	background:#ddd;
+}
+.inp:hover{
+	background:#eee;
+}
+.parlist{
+	max-height:400px;
+	overflow:auto;
+}
+.parlist::-webkit-scrollbar{
+	width:10px;
+	height:10px;
+}
+.parlist::-webkit-scrollbar-thumb{
+	background:none;
+}
+.parlist:hover::-webkit-scrollbar-thumb{
+	background:#999;
+}
+div#resultbox{
+	max-height:400px;
+	overflow:auto;
+}
+div#resultbox::-webkit-scrollbar{
+	width:10px;
+	height:10px;
+}
+div#resultbox::-webkit-scrollbar-thumb{
+	background:none;
+}
+div#resultbox:hover::-webkit-scrollbar-thumb{
+	background:#999;
+}
+span#resultlist{
+	color:#333;
+	cursor:pointer;
+}
+span#resultlist:hover{
+	color:#999;
+}
+/*Above this = Menu bar*/
+body{
+	background:#335;
+	font:16px arial black;
+	font:17px arial black; /*Linux fix*/
+}
+body::-webkit-scrollbar{/*this only applies to the window, child elements retain their scrollbar*/
+	display:none;
+}
+img{
+	width:20px;
+	position:relative;
+	top:4px;
+	margin:0 5px;
+}
+div#toprow{
+	opacity:0;
+}
+div#dark{
+	background:#000;
+	position:absolute;
+	width:200%;
+	height:200%;
+	overflow:hidden;
+	margin:-10px;
+	z-index:20;
+	opacity:.9;
+	display:none;
+}
+div[wrap]{
+	background:#ddd;
+	width:700px;
+	box-shadow:#000 2px 2px 3px;
+	border:2px solid black;
+	position:absolute;
+	top:20px;
+	padding:10px;
+}
+div[wrap][form]{
+	width:650px;
+	background:#ddd;
+	position:fixed;
+	top:25%;
+	left:23%;
+	z-index:21;
+}
+div#lslist{
+	max-height:300px;
+	overflow-y:scroll;
+	background:#eee;
+	padding:5px;
+	border:2px solid #ccc;
+}
+div#lslist::-webkit-scrollbar,div#lslist::-moz-scrollbar{
+	width:7px;
+	height:7px;
+}
+div#lslist::-webkit-scrollbar-thumb,div#lslist::-moz-scrollbar-thumb{
+	background:none;
+}
+div#lslist:hover::-webkit-scrollbar-thumb,div#lslist:hover::-moz-scrollbar-thumb{
+	background:#999;
+}
+input[i]{
+	background:#ddd;
+	border:none;
+	border-bottom:2px solid black;
+	margin:0px 15px;
+}
+hr[b]{
+	height:5px;
+	background:#aaa;
+}
+h1[fresh]{
+	width:300px;
+	background:#ccc;
+	margin:10px auto;
+	padding:10px;
+	text-align:center;
+	border:2px solid #333;
+	box-shadow:#000 2px 2px 3px;
+}
+div#div{/*this is what shows the links*/
+	/max-height:550px;
+	overflow-y:auto;
+	padding:5px;
+}
+/*div#div*/::-webkit-scrollbar,div#div::-moz-scrollbar{
+	width:10px;
+	height:10px;
+}
+/*div#div*/::-webkit-scrollbar-thumb,div#div::-moz-scrollbar-thumb{
+	background:none;
+}
+div#div:hover::-webkit-scrollbar-thumb,div#div:hover::-moz-scrollbar-thumb{
+	background:#999;
+}
+p[link]{
+	margin:-5px 0px;
+	padding:5px 5px;
+	cursor:pointer;
+	white-space:nowrap;
+	max-width:700px;
+	overflow-x:hidden;
+}
+p[link]:hover{
+	background:#eee;
+}
+p[link]::-webkit-scrollbar,p[link]::-moz-scrollbar{
+	width:5px;
+	height:5px;
+}
+p[link].starred{
+	background:#eee;
+}
+a[link],b[link]{
+	display:inline-block;
+	width:335px;
+	overflow-x:auto;
+}
+a[link]{
+	overflow:hidden;
+	text-overflow:ellipsis;
+}
+a[link]:hover{
+	overflow:auto;
+	text-overflow:clip;
+}
+b[link]{
+	width:365px;
+}
+a[link]::-webkit-scrollbar,a[link]::-moz-scrollbar{
+	width:0px;
+	height:0px;
+}
+a[link]:hover::-webkit-scrollbar,a[link]:hover::-moz-scrollbar{
+	width:8px;
+	height:8px;
+}
+a[link]::-webkit-scrollbar-thumb,a[link]::-moz-scrollbar-thumb{
+	background:none;
+}
+a[link]:hover::-webkit-scrollbar-thumb,a[link]:hover::-moz-scrollbar-thumb{
+	background:#999;
+}
+span[varr]{/*vertical arrow*/
+	border:1px solid #aaa;
+	padding: 0px 10px 3px 10px;
+	background:#ccc;
+	position:relative;
+	top:-2px;
+	box-shadow:#000 0px 0px 1px;
+}
+input[clr]{
+	background:#ccc;
+	font:18px arial black;
+	padding:5px 10px;
+	cursor:pointer;
+	width:80px;
+}
+input[clr]:hover{
+	background:#ddd;
+}
+div[topbutton]{
+	cursor:pointer;
+	background:#ddd;
+	display:inline-block;
+	padding:5px 10px;
+}
+div[topbutton]:hover{
+	background:#eee;
+}
+div[bottomlinks]{
+	font:18px arial black;
+	display:inline-block;
+	margin:0px 5px;
+	padding:5px;
+	height:32px;
+	//border-left:2px solid #333;
+	position:relative;
+	left:8px;
+	bottom:2px;
+}
+a[href]{
+	color:#00f;
+	text-decoration:none;
+}
+a[href]:hover{
+	color:#0ce;
+}
+#listitem{
+	cursor:pointer;
+	display:inline-block;
+	width:150px;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+}
+#listitem:hover{/*Show text*/
+	overflow:auto;
+	text-overflow:clip;
+}
+#listitem::-webkit-scrollbar{
+	width:10px;
+	height:10px;
+	display:none;
+}
+#listitem:hover::-webkit-scrollbar{
+	display:block;
+}
+#listitem::-webkit-scrollbar-thumb{
+	background:none
+}
+#listitem:hover::-webkit-scrollbar-thumb{
+	background:#999;
+}
+#listitem[selected]{
+	color:#0a0;
+}
+#listitem[selected]:before{
+	content:'>[';
+	color:#050;
+}
+#listitem[selected]:after{
+	content:']';
+	color:#050;
+}
+#listitem:hover{
+	color:#00f;
+}
+hr{/*I don't like Firefox's black link*/
+	border-top:1px solid #999;
+	border-bottom:1px solid #eee;
+}
+span[vr]{/*vr=vertical rule, like a vertical version of < hr >*/
+	border-left:1px solid #999;
+	border-right:1px solid #eee;
+	position:relative;
+	padding:8px 0;
+	left:10px;
+	bottom:0px;
+}
+/*column1,2,and 3*/
+h1{
+	margin-top:-5px;
+	margin-bottom:-5px;
+}
+span.c1{
+	display:inline-block;
+	width:200px;
+	height:30px;
+	margin-left:5px;
+}
+span.c2{
+	display:inline-block;
+	width:490px;
+}
+span.c3{
+	display:inline-block;
+	width:100px;
+
+}
+small{
+	display:inline-block;
+	width:25px;
+	border-right:2px solid #999;
+	margin-right:0px;
+	text-align:center;
+}
+</style>

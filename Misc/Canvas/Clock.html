@@ -1,0 +1,159 @@
+<style>body{margin:0;padding:0;text-align:center;background:#000}canvas{width:880px;height:310px;background:#000;}</style>
+<canvas></canvas>
+<script>
+$=function(){return document.querySelector.apply(document,arguments)}
+canvas=$('canvas')
+canvas.width=290
+canvas.height=100
+ctx=canvas.getContext('2d')
+colon=function(){
+    X=135
+	Y=20
+	ctx.fillStyle='#fff'
+	ctx.beginPath()
+	dot=function(){
+		ctx.moveTo(X+00,Y+00)
+		ctx.lineTo(X+15,Y+00)
+		ctx.lineTo(X+15,Y+15)
+		ctx.lineTo(X+00,Y+15)
+		ctx.lineTo(X+00,Y+00)
+	}
+	dot()
+	Y+=45
+	dot()
+	ctx.fill()
+	ctx.closePath()
+}
+gC=function(_X){//getCoords. Args are 1,2,3,or 4
+	X=_X==1?10:_X==2?70:_X==3?170:_X==4?230:1000
+	Y=10
+	ctx.fillStyle='#fff'
+	ctx.beginPath()
+}
+box=function(_){
+	gC(_)
+	ctx.lineTo(X+50,Y+00)
+	ctx.lineTo(X+50,Y+80)
+	ctx.lineTo(X+00,Y+80)
+	ctx.lineTo(X+00,Y+00)
+	ctx.fill()
+	ctx.closePath()
+	//this function serves as the basline dimensions: 50x80
+	//It is only for debug 
+	//when aligning the canvas to make the design look right
+}
+HZ=function(){//HoriZontal
+	ctx.moveTo(X+00,Y+00)//make boxes to represent chunks for stuff like 0, 6, 8
+	ctx.lineTo(X+50,Y+00)
+	ctx.lineTo(X+50,Y+20)
+	ctx.lineTo(X+00,Y+20)
+	ctx.lineTo(X+00,Y+00)
+}
+VT=function(){//VerTical
+	ctx.moveTo(X+00,Y+00)
+	ctx.lineTo(X+20,Y+00)
+	ctx.lineTo(X+20,Y+80)
+	ctx.lineTo(X+00,Y+80)
+}
+HVT=function(){//Half VerTical
+	ctx.moveTo(X+00,Y+00)
+	ctx.lineTo(X+20,Y+00)
+	ctx.lineTo(X+20,Y+40)
+	ctx.lineTo(X+00,Y+40)
+}
+window[0]=function(_){
+	gC(_)
+	HZ();Y+=60;HZ();Y-=60
+	VT();X+=30;VT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[1]=function(_){
+	gC(_)
+	X+=30;VT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[2]=function(_){
+	gC(_)
+	HZ();Y+=30;HZ();Y+=30;HZ();Y-=60;
+	X+=30;HVT();Y+=30;X-=30;HVT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[3]=function(_){
+	gC(_)
+	X+=30;VT();X-=30
+	HZ();Y+=30;HZ();Y+=30;HZ()
+	ctx.fill()
+	ctx.closePath()
+}
+window[4]=function(_){
+	gC(_)
+	X+=30;VT();X-=30
+	Y+=30;HZ();Y-=30
+	HVT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[5]=function(_){
+	gC(_)
+	HZ();Y+=30;HZ();Y+=30;HZ();Y-=60
+	HVT();X+=30;Y+=30;HVT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[6]=function(_){
+	gC(_)
+	HZ();Y+=30;HZ();Y+=30;HZ();Y-=60
+	HVT();X+=30;Y+=30;HVT();X-=30;HVT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[7]=function(_){
+	gC(_)
+	HZ();X+=30;VT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[8]=function(_){
+	gC(_)
+	ctx.moveTo(X+00,Y+00)
+	HZ();Y+=30;HZ();Y+=30;HZ();Y-=60
+	VT();X+=30;VT()
+	ctx.fill()
+	ctx.closePath()
+}
+window[9]=function(_){
+	gC(_)
+	HZ();Y+=30;HZ();Y+=30;HZ();Y-=60
+	HVT();X+=30;VT()
+	ctx.fill()
+	ctx.closePath()
+}
+scanlines=function(){
+    ctx.fillStyle='#000'
+    for(i=0;i<canvas.height;i+=2){
+        ctx.fillRect(0,i,canvas.width,1)
+    }
+}
+UPDATE=function(){
+	ctx.clearRect(0,0,canvas.width,canvas.height)
+	h=new Date().getHours()
+	m=new Date().getMinutes()
+	h=(h%12==0?'12':h%12>9?''+h%12:'0'+h%12).split('')
+	m=(m%60==0?'00':m%60>9?''+m%60:'0'+m%60).split('')
+	hT=h[0]
+	hO=h[1]
+	mT=m[0]
+	mO=m[1]
+	window[hT](1)
+	window[hO](2)
+	colon()
+	window[mT](3)
+	window[mO](4)
+	scanlines()
+	loop=setTimeout(UPDATE,1000/60)
+}
+UPDATE()
+</script>

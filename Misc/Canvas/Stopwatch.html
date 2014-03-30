@@ -1,0 +1,102 @@
+<p>Better version: <a href="http://jsfiddle.net/B1KMusic/gbPGb/show" style="color:#aaa;">http://jsfiddle.net/B1KMusic/gbPGb/show</a></p>
+<canvas></canvas>
+<script>
+$$=function(){return document.querySelectorAll.apply(document,arguments)}
+canvas=$$('canvas')[0]
+canvas.width=275
+canvas.height=60
+ctx=canvas.getContext('2d')
+ctx.font='bold 3em monospace'
+ctx.strokeText('00:00:00.000',0,30)
+
+Started=false
+SMO=false//StartMouseOver
+UPDATESTART=function(){
+    ctx.clearRect(0,40,50,60)
+	ctx.fillStyle=!SMO?'#aaa':'#ccc'
+	canvas.style.cursor=!SMO?'auto':'pointer'
+	ctx.fillRect(0,40,50,20)
+	ctx.font='bold 1em monospace'
+	ctx.fillStyle='#000'
+	ctx.fillText(!Started?'Start':'Stop',!Started?5:8,55)
+	setTimeout(UPDATESTART,10)
+}
+UPDATESTART()
+CMO=false//ClearMouseOver
+UPDATECLEAR=function(){
+	ctx.clearRect(225,40,55,60)
+	ctx.fillStyle=!CMO?'#aaa':'#ccc'
+	canvas.style.cursor=!CMO?'auto':'pointer'
+	ctx.fillRect(225,40,55,20)
+	ctx.font='bold 1em monospace'
+	ctx.fillStyle='#000'
+	ctx.fillText('Clear',230,55)
+	setTimeout(UPDATECLEAR,10)
+}
+UPDATECLEAR()
+
+canvas.onmousemove=function(e){
+	X=e.offsetX;Y=e.offsetY
+	if(X>0&&Y>40&&X<50&&Y<60){//startbtn
+		SMO=true
+		CMO=false
+	}else if(X>225&&Y>40&&X<(225+55)&&Y<(60)){//cleabtn
+		SMO=false
+		CMO=true
+	}else{
+		SMO=false
+		CMO=false
+	}
+}
+canvas.onclick=function(e){
+	X=e.offsetX;Y=e.offsetY
+	if(X>0&&Y>40&&X<50&&Y<60){//startbtn
+		Started=Started?false:true
+		if(Started){
+			UPDATE()
+		}else{
+		    clearTimeout(loop)
+		}
+	}else if(X>225&&Y>40&&X<(225+55)&&Y<(60)){//clearbtn
+		CLEAR()
+	}
+}
+Init=function(){
+	mst=0
+	msh=0
+	so=0
+	st=0
+	mo=0
+	mt=0
+	ho=0
+	ht=0
+	ctx.clearRect(0,0,500,40)
+	ctx.font='bold 3em monospace'
+	ctx.fillText('00:00:00.000',0,30)
+}
+Init()
+UPDATE=function(){
+	ctx.clearRect(0,0,500,40)
+	mst++
+	if(mst==10){mst=0;msh++}
+	if(msh==10){msh=0;so++}
+	if(so==10){so=0;st++}
+	if(st==6){st=0;mo++}
+	if(mo==10){mo=0;mt++}
+	if(mt==6){mt=0;ho++}
+	if(ho==10){ho=0;ht++}
+	ctx.font='bold 3em monospace'
+	ctx.fillStyle='#000'
+	ctx.fillText(ht%10+''+ho+':'+mt+mo+':'+st+so+'.'+msh+mst+'0',0,30)
+	loop=setTimeout(UPDATE,1000/100)
+}
+CLEAR=function(){
+	clearTimeout(loop)
+	Init()
+}
+</script>
+<style>
+canvas{
+	background:#fff;
+}
+</style>

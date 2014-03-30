@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<title>Link Saver</title>
+<link id="favicon" rel="icon" type="image/png" href="http://cdn4.iconfinder.com/data/icons/cc_mono_icon_set/blacks/48x48/link.png">
+<link rel="stylesheet" type="text/css" href="./Link_Saver/css/Main.css">
+<link rel="stylesheet" type="text/css" href="./Link_Saver/css/Link_Saver.css">
+<script>
+/*Put here for speed*/
+((function(){try{Storage_Key = 'Link Saver';if(localStorage[Storage_Key]){storage = JSON.parse(localStorage[Storage_Key]);}else{storage = {Config:{lastSave:(new Date()).toString(),perPage:10},Link:{links:0},Paradigm:{key:'Link',list:{'Link':'Link'}}};}save = function(){storage.Config.lastSave = (new Date()).toString();localStorage[Storage_Key] = JSON.stringify(storage);};clearStorage = function(){localStorage.removeItem(Storage_Key);localStorage.update = 'true';};console.log('Data has been successfully loaded.');}catch(e){console.error('Something has prevented the Data from loading. Try refreshing.');}})());
+((function checkDate(){if(localStorage[Storage_Key]){var a = storage.Config.lastSave,b = JSON.parse(localStorage[Storage_Key]).Config.lastSave;if(a != b){location.reload();}}if(localStorage.update){localStorage.removeItem('update');location.reload();}setTimeout(checkDate,1000);})());
+showInfo = function(string){document.querySelector.apply(document,['#info']).innerHTML = string;};
+function windowPopup(url,w,h){var height = h||250, width = w||300;window.open('./Link_Saver/Forms/'+url,'','width='+width+',height='+height+',top=100,left=0,location=no,menubar=no,status=no,titlebar=no,toolbar=no');};
+function Popup(url,w,h){var height = h || 250, width = w||300,win,frm,cBtn;win = document.createElement('div');frm = document.createElement('iframe');frm.style.width = width+'px';frm.style.height = height+'px';frm.src = './Link_Saver/Forms/'+url;cBtn = document.createElement('input');cBtn.type = 'button';cBtn.style.width = '300px';cBtn.style.position = 'relative';cBtn.style.left = '-10px';cBtn.value = 'Close Window';cBtn.onclick = function(){Close(win)};win.appendChild(cBtn);win.appendChild(document.createElement('br'));win.appendChild(frm);frame.appendChild(win);};
+function Close(target){target.parentNode.removeChild(target);};
+</script>
+<div menu onmouseout="showInfo('Hover over a tool to see more info about it<br><br>Note: For the best possible user experience, use a <a href=\'http://en.wikipedia.org/wiki/List_of_web_browsers#WebKit-based\' target=\'_BLANK\'>Webkit-based</a> Browser.<p>Note: There is a newer version that uses a login system <a href=\'http://bradenbest.com/Linksaver\'>here</a></p>')">
+    <ul>
+        <li><input type="button" onclick="windowPopup('Search.html',300,200)" value="Search in new window" onmouseover="showInfo('Know the name of a link but can\'t find what paradigm it\'s in? Use this tool to find it.')"></li>
+        <li><input type="button" onclick="Popup('Search.html',300,200)" value="Search" onmouseover="showInfo('Know the name of a link but can\'t find what paradigm it\'s in? Use this tool to find it.')"></li>
+        <li><input type="button" onclick="Popup('AddLink.html',300,420)" value="Add Link" onmouseover="showInfo('Use this tool to add a new <i>Link</i>.')"></li>
+        <li><input type="button" onclick="Popup('Paradigm.html?method=add',300,200)" value="Add Paradigm" onmouseover="showInfo('Use this tool to add a new <i>Paradigm</i>.<hr>What\'s a paradigm?<br><br>A paradigm is like a folder for your links. It\'s a sorting feature.')"></li>
+        <li><input type="button" onclick="Popup('Paradigm.html?method=select',300,innerHeight-100)" value="Select Paradigm" onmouseover="showInfo('Use this tool to select between existing paradigms.')"></li>
+        <li><input type="button" onclick="Popup('Paradigm.html?method=remove',300,innerHeight-100)" value="Remove Paradigm" onmouseover="showInfo('Use this tool to delete a specified paradigm and all of its associated data.')"></li>
+        <li><input type="button" onclick="Popup('Backup.html',300,270)" value="Backup and Restore" onmouseover="showInfo('Use this tool to backup your data or restore a backup if you have one.')"></li>
+        <li><input type="button" onclick="Popup('Settings.html')" value="Settings" onmouseover="showInfo('Use this tool to change settings and preferences.')"></li>
+        <li><div id="info">Hover over a tool to see more info about it<br><br>Note: For the best possible user experience, use a <a href="http://en.wikipedia.org/wiki/List_of_web_browsers#WebKit-based">Webkit-based</a> Browser.<p>Note: There is a newer version that uses a login system <a href="http://bradenbest.com/Linksaver">here</a></p></div></li>
+    </ul>
+</div>
+<div container><noscript>You appear to have JavaScript disabled. If you want to use this WebApp, you must enable JavaScript.</noscript></div>
+<div copyright><hr style="margin-top:0;">Link Saver &copy;2013 Braden Best</div>
+<div id="frame"></div><!--Popups are opened here-->
+<script type="text/javascript" src="./Link_Saver/js/Prefs.js"></script>
+<script>
+document.title = storage.Paradigm.key+' Saver';
+var container = document.querySelector.apply(document,['div[container]']);
+var perPage = storage.Config.perPage, paradigm = storage[storage.Paradigm.key], links = paradigm.links, pages = 1, t1, t2, LI, allowSwap = false;
+var darkbox = document.createElement('div');darkbox.style.background = '#000';darkbox.style.opacity = '0.5';darkbox.style.position = 'fixed';darkbox.style.left = '0';darkbox.style.top = '0';darkbox.style.width = '100%';darkbox.style.height = '100%';blur = function(){document.body.appendChild(darkbox);};unblur = function(){document.body.removeChild(darkbox);};
+B = function(name,func){//Shorthand for Button
+    return '<input type="button" onclick="'+func+'" value="'+name+'" style="min-width:50px;margin-right:-15px;">'
+}
+Edit = function(id){
+    Popup('Edit.html?id='+id);
+}
+Star = function(id){
+    paradigm[id].starred = true;
+    save();
+    Write(perPage*pages);
+}
+Unstar = function(id){
+    paradigm[id].starred = false;
+    save();
+    Write(perPage*pages);
+}
+Delete = function(id){
+    if(id<paradigm.links-1){
+        alert('Must be at top position to delete');
+        return false;
+    }
+    blur();
+    if(!confirm('Are you sure you wish to delete this item?')){
+        unblur();
+        return false;
+    }
+    unblur();
+    delete paradigm[id];
+    paradigm.links--;
+    save();
+    Write(perPage*pages);
+}
+IMGERR = function(img){//this and getFavicon are forked from old Link Saver
+        img.src = Ximg;
+}
+renderFavicon = function(){
+    var fCanvas = document.createElement('canvas');
+    fCanvas.width = 16;
+    fCanvas.height = 16;
+    fctx = fCanvas.getContext('2d');
+    fctx.font = 'bold 14px Monospace';
+    fctx.textAlign = 'center';
+    fctx.textBaseline = 'middle';
+    fctx.fillText('LS',8,8);
+    var fImg = fCanvas.toDataURL();
+    favicon.href = fImg; 
+};
+getFavicon = function(url){
+    Ximg = 'http://upload.wikimedia.org/wikipedia/commons/thumb/3/31/ProhibitionSign2.svg/200px-ProhibitionSign2.svg.png';
+	try{
+		if(url.match('encyclopediadramatica')){//special cases. ED is only special case so far
+			return '<img src="https://images.encyclopediadramatica.se/2/26/Favicon.png">'//get ED's favicon
+		}else{
+			return '<img onerror="IMGERR(this)" src="'+'http://'+RegExp('https?://([^/]*)/').exec(url)[1]+'/favicon.ico'+'"/>'
+		}
+	}catch(e){
+		return '<img src="'+Ximg+'"/>'
+	}
+}
+Write = function(perPage){
+    var list = document.createElement('ul');
+    container.innerHTML = '';
+    /*for(var i=links;i>=links-perPage;i--){
+        if(paradigm[i]){
+            list.innerHTML+='<li draggable=true title="'+i+'" link '+(paradigm[i].starred?'starred':'')+'><span num>'+(i+1)+'</span> '+getFavicon(paradigm[i].link)+' <a href="'+paradigm[i].link+'" target="_blank">'+paradigm[i].title+'</a> '+B('EDIT','Edit('+i+')')+' '+B((paradigm[i].starred?'UN':'')+'STAR',(paradigm[i].starred?'Uns':'S')+'tar('+i+')')+' '+B('DELETE','Delete('+i+')')+'</li>';
+        }
+    }*/
+    (function loop(i){//Adds a delay for neat effect. Remove this and uncomment surrounding code to revert change
+    //Another benefit of this is that insanely long render cycles won't freeze the browser (e.g. having to render 500+ links in a single loop)
+        if(paradigm[i]){
+            list.innerHTML+='<li draggable=true title="'+i+'" link '+(paradigm[i].starred?'starred':'')+'><span num>'+(i+1)+'</span> '+getFavicon(paradigm[i].link)+' <a href="'+paradigm[i].link+'" target="_blank">'+paradigm[i].title+'</a> '+B('EDIT','Edit('+i+')')+' '+B((paradigm[i].starred?'UN':'')+'STAR',(paradigm[i].starred?'Uns':'S')+'tar('+i+')')+' '+B('DELETE','Delete('+i+')')+'</li>';
+        }
+        if(i>=links-perPage){
+            setTimeout(function(){
+                loop(i-1);
+            },0);
+        }else{
+            if(perPage<=links){
+                pages++;
+                list.innerHTML+='<li link>'+B('Show More','Write('+(storage.Config.perPage*pages)+')')+' '+B('Show All','Write('+(links+1)+')')+'</li>';
+            }
+            LI = document.querySelectorAll.apply(document,['li[link]']);
+            for(var i in LI){
+                LI[i].ondragover = function(){
+                    return false;
+                }
+                LI[i].ondragstart = function(){
+                    t1 = this.title;
+                }
+                LI[i].ondragenter = function(){
+                    t2 = this.title;
+                }
+                LI[i].ondrop = function(){
+                    if(t1!=t2){
+                        var _t1 = storage[storage.Paradigm.key][t1];
+                        var _t2 = storage[storage.Paradigm.key][t2];
+                        var __t1 = _t2;
+                        var __t2 = _t1;
+                        storage[storage.Paradigm.key][t1] = __t1;
+                        storage[storage.Paradigm.key][t2] = __t2;
+                        save();
+                        Write(storage.Config.perPage*pages);
+                    }
+                }
+            }
+        }
+    })(links);
+    container.appendChild(list);
+    /*if(perPage<=links){
+        pages++;
+        list.innerHTML+='<li link>'+B('Show More','Write('+(storage.Config.perPage*pages)+')')+' '+B('Show All','Write('+(links+1)+')')+'</li>';
+    }
+    LI = document.querySelectorAll.apply(document,['li[link]']);
+    for(var i in LI){
+        LI[i].ondragover = function(){
+            return false;
+        }
+        LI[i].ondragstart = function(){
+            t1 = this.title;
+        }
+        LI[i].ondragenter = function(){
+            t2 = this.title;
+        }
+        LI[i].ondrop = function(){
+            if(t1!=t2){
+                var _t1 = storage[storage.Paradigm.key][t1];
+                var _t2 = storage[storage.Paradigm.key][t2];
+                var __t1 = _t2;
+                var __t2 = _t1;
+                storage[storage.Paradigm.key][t1] = __t1;
+                storage[storage.Paradigm.key][t2] = __t2;
+                save();
+                Write(storage.Config.perPage*pages);
+            }
+        }
+    }*/
+    renderFavicon();
+};
+if(localStorage[Storage_Key]){
+    Write(perPage);
+    if(storage[storage.Paradigm.key].links == 0){
+        container.innerHTML = '<p style="display:inline;">No Links</p>'+B('Add One','Popup(\'AddLink.html\',300,350)');
+    }
+}else{
+    container.innerHTML = '<h1>Welcome to the Link Saver Web App</h1><p>Use the menu on the left, and enjoy.</p>';
+    container.style.textAlign = 'center';
+}
+</script>

@@ -1,0 +1,63 @@
+Source Article:
+http://www.flipcode.com/archives/Plotting_A_3D_Point_On_A_2D_Screen.shtml
+
+
+
+width and height refer to the width and height of the screen/canvas
+
+2D: [X,Y]
+
+3D: [X,Y,Z]
+
+position:
+
+X: ( (X/Z)+(width/2)) * (width/2)
+    divide X by Z, add 1/2 width, multiply 1/2 width
+Y: (-(Y/Z)+(height/2)) * (height/2)
+	reverse Y, divide by Z, add 1/2 height, multiply 1/2 height
+Z (Size): Z (1/Z?)
+	no formula for Z, Z is represented by scale
+Reasoning: 
+in 2D, 0,0 is at top left. 
+For 3D we want 0,0,0 to be in the center; at the observer's eyes.
+
+Y must be negative so it isn't upside down
+
+At the same time, if viewer's eyes are NOT at 0,0,0, 
+subtract so it remains consistent (X/Y/Z - viewpointX/Y/Z)
+
+We also need to scale (*width|height/2) so it's not too close to center
+
+I must say, 
+the projection plane and frustum* method 
+sounds like much less of a headache than raycasting
+
+*frustum is basically a pyramid that extends from the viewer's eyes going outward
+
+
+
+Aspect ratio equation:
+
+aspectRatio = width/height
+if(aspectRatio>1){
+	x_screen=x_screen/aspectRatio
+}else{
+	y_screen=y_screen*aspectRatio
+}
+
+We're breaking some ground here, 
+becuase I never even thought of that!
+
+
+Realistic 3D Projection is rendered using raytracing
+
+Simple 3D Projection is rendered by plotting points based on the eq/tns
+
+That much is known.
+
+
+
+Now imagine the accomodations that would have to be made if you added
+a fourth dimension
+
+Oh god

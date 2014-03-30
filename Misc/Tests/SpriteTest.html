@@ -1,0 +1,28 @@
+<canvas id=bigCanvas width=300 height=300></canvas>
+<script>
+document.body.appendChild((function(){
+  canvas=document.createElement('canvas');
+  canvas.width=W=16;
+  canvas.height=H=16;
+  ctx=canvas.getContext('2d');
+  return canvas;
+})())
+createAnim=function(x,w,l){
+    f=[]
+    for(i=0;i<l;i++){
+    	f.push((-x)-(w*i))
+    }
+}
+createAnim(553,16,10)//x, sprite width, anim:Length
+t=0//track
+sprite=new Image()
+sprite.src='http://spriters-resource.com/custom_edited/mario/mario33.png'
+ct2=bigCanvas.getContext('2d')
+UPDATE=function(){
+    fl=f.length
+    ctx.clearRect(0,0,W,H)
+	setTimeout(UPDATE,1000/12)
+    ctx.drawImage(sprite,f[++t%fl],-1064)
+}
+UPDATE()
+</script>

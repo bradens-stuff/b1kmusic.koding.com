@@ -1,0 +1,141 @@
+<style>
+*{margin:0;padding:0;}
+</style>
+<canvas id="canvas"></canvas>
+<script>
+var ctx = canvas.getContext('2d'), memory = {}, scale = 6, key = [], w = function(){return innerWidth-innerWidth%scale}, h = function(){return innerHeight-innerHeight%scale};
+canvas.width = W = w();
+canvas.height = H = h();
+canvas.tabIndex = 0;
+add = function(o){
+    o.id = Math.floor(Math.random()*10000).toString(36);
+    for(var a in memory){
+        if(o.id == memory[a].id){
+            add(o);
+            return false;
+        }
+    }
+    memory[o.id] = o;
+};
+remove = function(o){
+    delete memory[o.id];
+};
+render = function(o){
+    ctx.save();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(o.x*scale,o.y*scale,scale,scale);
+    ctx.restore();
+};
+collision = function(a,b){
+  return a.x==b.x&&a.y==b.y;
+};
+Snake = function(){
+    this.x = W/2/scale;
+    this.y = H/2/scale;
+    this.a = [];
+    this.d = Math.floor(Math.random()*4);
+    this.type = 'Snake';
+    for(var i = 0; i < 10; i++){
+        this.a.push(new Snake_Piece());
+    }
+    this.run = function(){
+        //Direction
+        if(this.d==0)this.y--;
+        if(this.d==1)this.x++;
+        if(this.d==2)this.y++;
+        if(this.d==3)this.x--;
+        this.x = Math.floor(this.x);
+        this.y = Math.floor(this.y);
+        //Control
+        if(key[38]&&this.d!=2)this.d = 0;
+        else if(key[39]&&this.d!=3)this.d = 1;
+        else if(key[40]&&this.d!=0)this.d = 2;
+        else if(key[37]&&this.d!=1)this.d = 3;
+        //Borders
+        if(this.y>H/scale-1)this.y = 0;
+        if(this.y<0)this.y = H/scale-1;
+        if(this.x>W/scale-1)this.x = 0;
+        if(this.x<0)this.x = W/scale-1;
+        //Move
+        var tail = this.a.pop();
+        tail.x = this.x;
+        tail.y = this.y;
+        this.a.unshift(tail);
+        //Collision
+        for(var i in this.a){
+            if(collision(this,this.a[i])&&i!=0){
+                this.kill();
+                init();
+            }
+        }
+    };
+    this.kill = function(){
+        for(var a in this.a){
+            remove(this.a[a]);
+        }
+        remove(this);
+    }
+    add(this);
+};
+Snake_Piece = function(){
+    this.x = -scale*2;
+    this.y = -scale*2;
+    this.type = 'Snake_Piece';
+    this.run = function(){
+        render(this);
+    };
+    add(this);
+};
+Food = function(){
+    this.x = Math.floor(Math.random()*W/scale);
+    this.y = Math.floor(Math.random()*H/scale);
+    this.type = 'Food';
+    this.run = function(){
+        for(var a in memory){
+            if(collision(this,memory[a])&&memory[a].type=='Snake'){
+                remove(this);
+                for(var b = 0; b < 5; b++){
+                    memory[a].a.push(new Snake_Piece());
+                }
+                new Food();
+            }
+        }
+        render(this);
+    };
+    add(this);
+};
+Control = function(){
+    this.type = 'Control';
+    this.run = function(){
+        canvas.onkeydown = canvas.onkeyup = function(e){
+            key[e.keyCode] = e.type=='keydown';
+        };
+        if(key['R'.charCodeAt(0)]){
+            init();
+        }
+        if(key['S'.charCodeAt(0)]){
+            new Snake();
+        }
+    };
+    add(this);
+};
+init = function(){
+    memory = {};
+    new Snake();
+    new Food();
+    new Control();
+};
+(function loop(){
+    if(W!=w()||H!=h()){
+        canvas.width = W = w();
+        canvas.height = H = h();
+    }
+    ctx.fillRect(0,0,W,H);
+    for(var a in memory){try{memory[a].run();}catch(e){init();}}
+    ctx.beginPath();for(var b = 0.5; b < H; b+=2){ctx.moveTo(0,b);ctx.lineTo(W,b);}ctx.stroke();ctx.closePath();
+    setTimeout(loop,1000/24);
+})();
+(function(){
+    init();
+})();
+</script>

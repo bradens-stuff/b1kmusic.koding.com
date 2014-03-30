@@ -1,0 +1,61 @@
+<body></body>
+<script>
+node = function(name,type,props,del){
+    document.body.appendChild((function(){
+        var e = window[name] = document.createElement(type);
+        for(var a in props){
+            window[name][a] = props[a];
+        }
+        if(del){
+            delete window[name];
+        }
+        return e;
+    })());
+};
+node('canvas','canvas',{
+    width:innerWidth,
+    height:innerHeight
+});
+node('style','style',{
+    type:'text/css',
+    innerText:'*{margin:0;padding:0;}'
+},true);
+ctx = canvas.getContext('2d');
+circ = function(s,e,r){
+    var x = canvas.width/2, y = canvas.height/2;
+    ctx.fillStyle = ctx.strokeStyle = 'rgb(160,160,180)';
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x,y,r,s,e,false);
+    ctx.lineWidth = r/5;
+    ctx.stroke();
+    ctx.closePath();
+    ctx.restore();
+    
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x+Math.cos(s)*r,y+Math.sin(s)*r);
+    ctx.lineTo(x+Math.cos(e)*r,y+Math.sin(e)*r);
+    ctx.lineTo(x,y);
+    ctx.fill();
+    ctx.closePath();
+}
+var s1 = Math.PI*0, e1 = Math.PI*.5, s2 = Math.PI, e2 = Math.PI*1.5;
+
+((function loop(vars){
+    if(innerWidth!=canvas.width||innerHeight!=canvas.height){
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+    }
+    var m = 128, r = vars.radius, fps = vars.fps;//multiplier,radius,fps
+    ctx.fillStyle = 'rgb(140,140,160)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    circ(s1,e1-(Math.PI/4),r);circ(s2,e2-(Math.PI/4),r);
+    circ(e2,s1-(Math.PI/4),r);circ(e1,s2-(Math.PI/4),r);
+    s1+=Math.PI/m;e1+=Math.PI/m;s2+=Math.PI/m;e2+=Math.PI/m;
+    asdf=setTimeout(function(){loop(vars)},1000/fps)
+})({
+    radius:canvas.width+canvas.height,
+    fps:60
+}));
+</script>

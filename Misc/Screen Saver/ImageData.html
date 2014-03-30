@@ -1,0 +1,198 @@
+<style>
+*{
+    margin:0;
+    padding:0;
+}
+canvas{
+    border:1px solid grey;
+    cursor:none;
+}
+</style>
+<div container></div>
+<script>
+    
+$$ = function(){
+    return document.querySelectorAll.apply(document,arguments);
+}
+$$('div[container]')[0].appendChild((function(){
+    canvas = document.createElement('canvas');
+    canvas.width = W = 200;
+    canvas.height = H = 200;
+    ctx = canvas.getContext('2d');
+    return canvas;
+})());
+$$('div[container]')[0].appendChild((function(){
+    canvas2 = document.createElement('canvas');
+    canvas2.width = 200;
+    canvas2.height = 200;
+    ctx2 = canvas2.getContext('2d');
+    return canvas2;
+})());
+$$('div[container]')[0].appendChild(document.createElement('br'))
+$$('div[container]')[0].appendChild((function(){
+    canvas3 = document.createElement('canvas');
+    canvas3.width = 200;
+    canvas3.height = 200;
+    ctx3 = canvas3.getContext('2d');
+    return canvas3;
+})());
+$$('div[container]')[0].appendChild((function(){
+    canvas4 = document.createElement('canvas');
+    canvas4.width = 200;
+    canvas4.height = 200;
+    ctx4 = canvas4.getContext('2d');
+    return canvas4;
+})());
+var fps = 60, mouse = [0,0], mouseDown = false, particles = [];
+doImgData = function(){
+    //Canvas 2
+    var data, ImgData = ctx.getImageData(0,0,W,H);
+    data = ImgData.data;
+    for(var i=0;i<data.length;i+=4){
+        data[i+0]=Math.random()<.5?0:data[i];
+        data[i+1]=Math.random()<.5?0:data[i+1];
+        data[i+2]=Math.random()<.5?0:data[i+2];
+        data[i+3]=255;
+    }
+    ctx2.putImageData(ImgData,0,0);
+    //Canvas 3
+    ImgData = ctx.getImageData(0,0,W,H);
+    data = ImgData.data;
+    for(var i=0;i<data.length;i+=4){
+        data[i+0]=0;
+        data[i+1]=data[i+1];
+        data[i+2]=0;
+    }
+    ctx3.putImageData(ImgData,0,0);
+    ctx3.beginPath();
+    for(var i=0;i<H;i+=2){
+        ctx3.moveTo(0,i+.5);
+        ctx3.lineTo(W,i+.5);
+    }
+    ctx3.stroke();
+    ctx3.closePath();
+    //Canvas 4
+    ImgData = ctx.getImageData(0,0,W,H);
+    data = ImgData.data;
+    for(var i=0;i<data.length;i+=4){
+        data[i+0]=0;
+        data[i+1]=0;
+        data[i+2]=data[i+2];
+    }
+    ctx4.putImageData(ImgData,0,0);
+}
+doParticles = function(){
+    for(var i in particles){
+        var p = particles[i];
+        p.x+=p.v[0];
+        p.y+=p.v[1];
+        if(p.x>W&&p.v[0]>0){
+            p.v[0]=-p.v[0];
+            p.v[0]+=5;
+        }
+        if(p.x<0&&p.v[0]<0){
+            p.v[0]=-p.v[0];
+            p.v[0]-=5;
+        }
+        if(p.y>H&&p.v[1]>0){
+            p.v[1]=-p.v[1];
+            p.v[1]+=5;
+        }
+        if(p.y<0&&p.v[1]<0){
+            p.v[1]=-p.v[1];
+            p.v[1]-=5;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = p.c;
+        ctx.arc(p.x,p.y,p.s/2,Math.PI*2,false);
+        ctx.fill();
+        ctx.closePath();
+        if((p.v[0]<1&&p.v[0]>-1)||(p.v[1]<1&&p.v[1]>-1)||p.x<-10||p.x>W+10||p.y<-10||p.y>H+10){//out of bounds/too slow
+            delete particles[i];
+        }
+    }
+}
+
+Particle = function(mouse){
+    this.x = mouse[0];
+    this.y = mouse[1];
+    with(Math){
+        var RC = function(){return floor(random()*255<<1)}
+        this.v = [random()<.5?-random()*10:random()*10,random()<.5?-random()*10:random()*10];//velocity
+        this.c = 'rgb('+RC()+','+RC()+','+RC()+')';//color
+        this.s = floor(random()*10);//size
+    }
+}
+/*Mouse Handling*/
+drawMouse = function(){
+    var x = mouse[0],y = mouse[1];
+    ctx.save();
+    //Draw fill pixel-by-pixel
+    ctx.fillStyle='#fff';ctx.fillRect(x+1,y+1,1,14);ctx.fillRect(x+2,y+2,1,12);ctx.fillRect(x+3,y+3,1,10);ctx.fillRect(x+4,y+4,1,8);
+    ctx.fillRect(x+5,y+5,1,8);ctx.fillRect(x+6,y+6,1,10);ctx.fillRect(x+7,y+7,1,4);ctx.fillRect(x+8,y+8,1,3);ctx.fillRect(x+9,y+9,1,2);
+    ctx.fillRect(x+10,y+10,1,1);ctx.fillRect(x+7,y+12,1,5);ctx.fillRect(x+8,y+15,1,2);
+    //Draw outline pixel-by-pixel
+    ctx.fillStyle='#000';ctx.fillRect(x+0,y-1,1,17);ctx.fillRect(x+1,y+15,1,1);ctx.fillRect(x+2,y+14,1,1);ctx.fillRect(x+3,y+13,1,1);
+    ctx.fillRect(x+4,y+12,1,1);ctx.fillRect(x+5,y+13,1,2);ctx.fillRect(x+6,y+15,1,2);ctx.fillRect(x+7,y+17,2,1);ctx.fillRect(x+9,y+15,1,2);
+    ctx.fillRect(x+8,y+13,1,2);ctx.fillRect(x+7,y+11,1,2);ctx.fillRect(x+8,y+11,4,1);ctx.fillRect(x+11,y+10,1,1);ctx.fillRect(x+10,y+9,1,1);
+    ctx.fillRect(x+9,y+8,1,1);ctx.fillRect(x+8,y+7,1,1);ctx.fillRect(x+7,y+6,1,1);ctx.fillRect(x+6,y+5,1,1);ctx.fillRect(x+5,y+4,1,1);
+    ctx.fillRect(x+4,y+3,1,1);ctx.fillRect(x+3,y+2,1,1);ctx.fillRect(x+2,y+1,1,1);ctx.fillRect(x+1,y+0,1,1);
+    ctx.restore();
+}
+doMouse = function(){
+    if(mouseDown){
+        for(var i=0;i<10;i++){
+            particles.push(new Particle(mouse));
+        }
+    }
+}
+
+getMouse = function(e){
+    var X,Y;
+    X = e.pageX||e.clientX||e.offsetX;
+    X = X-canvas.offsetLeft;
+    Y = e.pageY||e.clientY||e.offsetY;
+    Y = Y-canvas.offsetTop;
+    mouse = [X,Y];
+}
+
+canvas.onmousedown = function(e){
+    mouseDown = true;
+    getMouse(e);
+    return false
+}
+
+canvas.onmouseup = function(){
+    mouseDown = false;
+    return false
+}
+
+canvas.onmousemove = function(e){
+    getMouse(e);
+    return false
+}
+/*Mouse Handling (end)*/
+doGarbage = function(){
+    var arr2 = [];
+    for(var j in particles){
+        if(particles[j]){
+            arr2.push(particles[j]);
+        }
+    }
+    particles = [];
+    for(j in arr2){
+        particles.push(arr2[j]);
+    }
+}
+UPDATE = function(){
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0,0,W,H);
+    doMouse();
+    doParticles();
+    drawMouse();
+    doImgData();
+    doGarbage();
+}
+setInterval(UPDATE,1000/fps);
+    
+</script>

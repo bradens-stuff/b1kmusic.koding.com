@@ -1,0 +1,18 @@
+<input id="inp" onkeyup="check()"/>
+<div id="out"/>
+<script>
+function check(){
+    XHR = new XMLHttpRequest();
+    if(XHR.readyState==0||XHR.readyState==4){
+        query = encodeURIComponent(inp.value);
+        XHR.open('GET','AJAX_Test.php?q='+query,true);
+        XHR.onreadystatechange = function(e){
+            try{
+                response = JSON.parse(XHR.response);
+                out.innerHTML = decodeURIComponent(response.text);
+            }catch(e){}
+        }
+        XHR.send(null);
+    }
+};
+</script>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<link rel="icon" type="image/png" id="favicon">
+<style>
+body{
+    background:#333;
+}
+div[wrap]{
+	padding:5px;
+	background:#ddd;
+	width:800px;
+	margin:20px auto;
+    font:bold 12px monospace;
+}
+input{
+	padding:5px;
+	margin:5px 0;
+	background:#ddd;
+	width:97%;
+}
+select{
+	padding:5px;
+	background:#ddd;
+	margin:5px 0;
+	border-top:2px solid #aaa;
+	border-left:2px solid #aaa;
+	border-right:2px solid #eee;
+	border-bottom:2px solid #eee;
+	width:98%;
+}
+textarea{
+	width:98%;
+	background:#ddd;
+	padding:10px;
+	min-height:200px;
+}
+div[_item]{
+	display:none;
+}
+a[href]{
+	text-decoration:none;
+	color:#00f;
+}
+a[href]:hover{
+	color:#0ce;
+}
+a[extlink]{
+	display:inline-block;
+	width:150px;
+	overflow:auto;
+	white-space:nowrap;
+}
+a[Return]{
+	padding:10px;
+	background:#777;
+    color:#777;
+	position:fixed;
+	bottom:-30px;
+	left:0;
+    width:100%;
+    text-align:center;
+    font:bold 24px monospace;
+    -webkit-transition:bottom .25s;
+    -moz-transition:bottom .25s;
+    -o-transition:bottom .25s;
+}
+a[Return]:hover{
+    bottom:0;
+    color:#000;
+}
+#resultbox{
+	width:98%;
+	overflow-y:auto;
+	max-height:350px;
+}
+::-webkit-scrollbar{
+	height:10px;
+	width:10px;
+}
+::-webkit-scrollbar-track{
+	background:#333;
+}
+::-webkit-scrollbar-thumb{
+	background:#777;
+}
+hr{
+	margin:10px 0;
+}
+/*From menuStyle.css*/
+div[content]:hover{
+	min-height:500%;
+}
+div[content][search]:hover{
+	min-height:10000%;
+}
+</style>
+<link rel=stylesheet href="./Menu/menuStyle.css"/>
+<div id=menu>
+	<div menutitle>Menu</div>
+	<div item>
+		<span id=item_title>Search<span>
+		<div content search>
+			<input id=search_bar placeholder="Enter Search Term Here"><hr>
+			Type into the search bar to search. Press Enter to search for terms under 3 letters long<br>
+			HTML-type Pages Aren't indexed<hr>
+			<div id=resultbox></div>
+		</div>
+	</div>
+	<div item>
+		<span id=item_title>Add to Page</span>
+		<div content>
+			<div id=additem_box></div>
+		</div>
+	</div>
+	<div item>
+		<span id=item_title>Add Page to Index</span>
+		<div content>
+			<select id=pagetype>
+				<option style="color:grey;" title="Default">--Select Page Type--</option>
+				<option selected title="Default">Default</option>
+				<option title="HTML">Direct HTML Editor</option>
+			</select><br>
+			<input id=addpage placeholder="Enter Page Name"><hr>
+			Press Enter after filling out the form to submit.
+		</div>
+	</div>
+	<div item>
+		<span id=item_title>Other Options</span>
+		<div content>
+            Technical Items:<br>
+			<a href="javascript:CLEAR()">Clear Data</a> | 
+			<a href="javascript:ONLOAD_WRITE()">Re-Render Page</a> | 
+			<a href="javascript:SAVE()">Save and refresh</a> | 
+			<a href="javascript:LOAD()">Re-Load Data</a><hr>
+		</div>
+	</div>
+	<div _item><!--Remove '_' to activate debug submenu-->
+		<span id=item_title>Debug</span>
+		<div content>
+			<a href="javascript:EXT('http://google.com')">Test External Page with Google.com - EXT()</a><br>
+			<a href="javascript:GOTO('ASDF')">Test Internal Page System with page "ASDF" - GOTO()</a>
+		</div>
+	</div>
+</div>
+<div wrap>
+	<div id=div></div>
+</div>
+<script src="./Menu/menuLogic.js"></script>
+<script>
+onload=function(){
+	document.title='Minecraft Index'
+	Storage={
+		Pages:{}//Like Link Saver.
+		//Pages = list of pages. Used to build landing page
+		//X = Page, contains items
+	}
+	LOAD=function(){
+		Storage=JSON.parse(localStorage['MCINDEX Data'])
+	}
+	SAVE=function(){
+		localStorage['MCINDEX Data']=JSON.stringify(Storage)
+		location.reload()
+	}
+	CLEAR=function(){//To be accessed via console during debug
+		localStorage.removeItem('MCINDEX Data')
+		console.log('MC Index Data Cleared')
+	}
+	GOTO=function(p){
+		sessionStorage.page=p
+		SAVE()
+	}
+	EXT=function(p){
+		sessionStorage.prev=page
+		sessionStorage.page='External'
+		sessionStorage.url=p
+		SAVE()
+	}
+	if(localStorage['MCINDEX Data']){
+		LOAD()
+	}
+	document.title=page='Index'
+	if(sessionStorage.page){
+		document.title=page=sessionStorage.page
+	}
+	/*Start page handling*/
+	RETURNLINK='<a Return href="javascript:GOTO(\'Index\')">Back to Main</a>'
+	EDIT_ITEM=function(KEY){
+		try{
+			ITEM = Storage[page]['content'][KEY]
+			name = prompt('Type New Name',ITEM.name)
+			link = prompt('Type New Link',ITEM.link)
+			desc = prompt('Type New Description',ITEM.desc)
+			Storage[page]['content'][KEY]={name:name,link:link,desc:desc}
+			SAVE()
+		}catch(e){}
+	}
+	REMOVE_ITEM=function(KEY){
+		try{
+			if(!confirm('Are You Sure?')){
+				return false
+			}
+			delete Storage[page]['content'][KEY]
+			SAVE()
+		}catch(e){}
+	}
+	DELETE_PAGE=function(KEY){
+		try{
+			if(!confirm('Are you sure you want to delete "'+KEY+'"?')){
+				return false
+			}
+			delete Storage[KEY]
+			delete Storage['Pages'][KEY]
+			SAVE()
+		}catch(e){}
+	}
+	ONLOAD_WRITE=function(){
+		allowItem=false
+		allowEdit=false
+		if(page=='Index'){//LANDING PAGE
+			pages_length=0
+			for(i in Storage['Pages']){
+				pages_length++
+			}
+			if(pages_length>0){//If Pages contains pages
+				div.innerHTML=''
+				for(i in Storage['Pages']){//Build Index
+					div.innerHTML+=(
+						'<hr>'+
+						'[<a href="javascript:DELETE_PAGE(\''+i+'\')">Delete</a>] '+
+						'<a href="javascript:GOTO(\''+i+'\')">'+i+'</a>'
+					)
+				}
+				div.innerHTML=div.innerHTML.replace('<hr>','')
+			}else{
+				div.innerHTML='No Pages have been created yet. Use the menu to create one.'
+			}
+		}else if(page=='External'){//External Links trigger this page
+			div.innerHTML='This is the landing page for external links...<br><br>Click <a href="javascript:COMPLETE()">here</a> to go to the link<br>OR<br>click <a href="javascript:RETURN_TO_PREVIOUS()">here</a> to return to the previous page'
+			COMPLETE=function(){
+				window.open(sessionStorage.url)
+				sessionStorage.page=sessionStorage.prev
+				SAVE()
+			}
+			RETURN_TO_PREVIOUS=function(){
+				sessionStorage.page=sessionStorage.prev
+				SAVE()
+			}
+			div.innerHTML+=RETURNLINK
+		}else{//USER GENERATED PAGE [Off limits: Index, External, Pages]
+			if(Storage[page]){
+				if(Storage[page].type=='Default'){
+					allowItem=true
+				}else if(Storage[page].type=='HTML'){
+					allowEdit=true
+				}
+				try{
+					if(Storage[page].type=='Default'){
+						div.innerHTML=''
+						for(i in Storage[page]['content']){
+							ITEM=Storage[page]['content'][i]
+							div.innerHTML+=(
+								'<hr>'+
+								'[<a href="javascript:EDIT_ITEM(\''+i+'\')">EDIT</a>] '+
+								'[<a href="javascript:REMOVE_ITEM(\''+i+'\')">REMOVE</a>] '+
+								'<a extlink href="javascript:EXT(\''+ITEM.link+'\')">'+ITEM.name+'</a>'+
+								ITEM.desc
+							)
+						}
+						div.innerHTML=div.innerHTML.replace('<hr>','')
+						_LENGTH=0
+						for(i in Storage[page]['content']){
+							_LENGTH++
+						}
+						if(_LENGTH==0){
+							div.innerHTML='No Items. Add one via the menu.'
+						}
+					}else if(Storage[page].type=='HTML'){
+						div.innerHTML=Storage[page]['content'].replace(/\n/g,'<br>')
+					}
+				}catch(e){
+					div.innerHTML='No Items. Add one via the menu.'
+				}
+			}else{
+				div.innerHTML='Page does not exist'
+			}
+			div.innerHTML+=RETURNLINK
+		}
+	}
+	ONLOAD_WRITE()
+	BUILD_MENU=function(){//Menu Tabs' functionality gets defined here
+		/*Submit functions*/
+		SUBMIT_SEARCH=function(){
+			s=search_bar
+			if(s.value==''){
+				resultbox.innerHTML='Type into the search bar'
+			}else{//Start building search
+				results=[]
+				tracker=0
+				for(i in Storage){
+					if(i!='Pages'){
+						if(JSON.stringify(Storage[i]).match(RegExp(s.value,'gi'))){
+							//We go one level deeper
+							for(i2 in Storage[i]){
+								if(i2!='type'&&JSON.stringify(Storage[i][i2]).match(RegExp(s.value,'gi'))){
+								//And another
+									for(i3 in Storage[i][i2]){
+										if(JSON.stringify(Storage[i][i2][i3]).match(RegExp(s.value,'gi'))){
+											R=Storage[i][i2][i3]
+											results[tracker]={name:R.name,desc:R.desc,link:R.link,page:i}
+										}else{
+											results[tracker]='No'
+										}
+										tracker++
+									}
+								}
+							}
+						}
+					}
+				}
+				results_bool=false
+				for(i in results){
+					if(results[i]!='No'){
+						results_bool=true
+					}
+				}
+				if(!results_bool){//No Results
+					resultbox.innerHTML='No Results Match Your Term'
+				}else{
+					resultbox.innerHTML=''
+					for(i in results){
+						if(results[i]!='No'){
+							resultbox.innerHTML+=(
+								'<hr>'+
+								'Page: <a href="javascript:void(0)" onclick="GOTO(\''+results[i].page+'\')">'+results[i].page+'</a><br>'+
+								'Item: <a href="javascript:void(0)" onclick="EXT(\''+results[i].link+'\')">'+results[i].name+'</a><br>'+
+								'Description: '+results[i].desc
+							)
+						}
+					}
+					resultbox.innerHTML=resultbox.innerHTML.replace('<hr>','')
+				}
+			}
+		}
+		SUBMIT_ADD_ITEM=function(){
+			name=item_name.value
+			link=item_link.value
+			desc=item_desc.value||'No Description'
+			if(item_name.value!=''&&item_link.value!=''){
+				if(Storage[page]['content']===''){
+					Storage[page]['content']={}
+				}
+				Storage[page]['content'][name]={link:link,desc:desc,name:name}
+				SAVE()
+			}
+		}
+		SUBMIT_ADD_PAGE=function(){
+			if(addpage.value!=''){
+				if(addpage.value.match(/Index|External|Pages/,'g')){
+					return false
+				}
+				for(i in Storage){
+					if(addpage.value==i){//if page already exists
+						return false
+					}
+				}
+				Storage[addpage.value]={
+					type:type,
+					content:''
+				}
+				Storage['Pages'][addpage.value]=addpage.value
+				SAVE()
+			}
+		}
+		/*Search Tab*/
+		search_bar.onkeyup = function(e){
+			if(search_bar.value.length<3&&search_bar.value.length>0&&e.keyCode!=13){
+				resultbox.innerHTML='Press Enter to search'
+			}else{
+				SUBMIT_SEARCH()
+			}
+		}
+		/*Add New Item Tab*/
+		if(!allowItem && !allowEdit){
+			additem_box.innerHTML='This functionality is only available in a User-created Page.<br>Use the <b>Add Page To Index</b> tab to create one'
+		}else if(allowEdit){
+			EDIT=function(){
+				CNTNT=Storage[page]['content']||''//CNTNT = CoNTeNT without vowels
+				CNTNT=CNTNT.replace(/<br>/gi,'\n')
+				EDIT_BOX_CON.innerHTML='<hr><textarea id=edit_txt placeholder="Type text here. This accepts HTML, but it is optional.">'+CNTNT+'</textarea><hr>Press CTRL+ENTER to finish editing'
+				map = []
+				edit_txt.onkeydown = edit_txt.onkeyup = function(e){
+					map[e.keyCode] = e.type=='keydown';
+					if(map[17]&&map[13]){//CTRL+ENTER
+						Storage[page]['content']=edit_txt.value
+						SAVE()
+						map={}
+						return false
+					}
+				}
+			}
+			additem_box.innerHTML='<a href="javascript:EDIT()">[Edit this page]</a><div id=EDIT_BOX_CON></div>'
+		}else{
+			additem_box.innerHTML=	'<input id=item_name placeholder="Enter Item Name"><br>'+
+									'<input id=item_link placeholder="Enter Link/Forum"><br>'+
+									'<input id=item_desc placeholder="Enter Short Description"><hr>'+
+									'Fill out the form and press Enter to submit'
+			additem_box.onkeydown=function(e){
+				if(e.keyCode==13){
+					SUBMIT_ADD_ITEM()
+				}
+			}
+		}
+		/*Add New Page Tab*/
+		type=pagetype[pagetype.selectedIndex].title
+		pagetype.onchange=function(){
+			type=pagetype[pagetype.selectedIndex].title
+		}
+		addpage.onkeydown=function(e){
+			if(e.keyCode==13){
+				SUBMIT_ADD_PAGE()
+			}
+		}
+	}
+	BUILD_MENU()
+};
+((function drawFav(){
+    favicon.href = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACD0lEQVQ4T6WTQWsTQRiG35nZ2Z1Ndjfa2vVUhLYH6UEQPFlRCh4UhSJ4EPEf9KB/w4sX/4IXQfAkHjz0Ur2IgrUBoVVj1BiaJk3T7CbZ7Ow4HWmTQMylcxnmm+99vne+mSE44SCT9I9eLqvDfUotPFl5MzZ3bPDh82tKWRTCzhu+sDg4I2gnHTy+/XpEM7JYfXFVnfYKiDs9WMQCI8wAUkg4zIYQNlpJE51eH0/vrBntMeD66rwK587AnxEgQoEpAl/4BqBoBkky5LiLaqmBcrGOP19b+PSqTAaAlXnVP0WRLwhMzwXIT3FMh4EBuNxBrdRC8d1P/P5Sh6YhJwU+vC8NALcuzSrLy6PtS4gwhx46KMz+cxDt9tEoR2hs7yNrpqCcIWf72NgaAty/cl4p5qJS3wXVIEIkDpK2ARy0FfhhL/opWApwqp36HtY/fxs4ODHg3uUFlelOy1SCOwIySRF1u8bBr70YeZsh0XvCYZBSwuI21jd/DDlYWlAJ4foKE0z5LpK+BGPUALYr+li2A5UpXSCFRZUGOHhbHALcWJxR4dkQvYwh8GzQLEO1GRtAtdGC1sJ1OCLdg7i1D9fm+Pi9NnBgMvW4efGc8lwHQRBgL05MrLJT1y+RIUsT7GjYVi0+vv6xT/nu0qIisgtbCAPYLNUQR9GI8KjgxM/0YPmC+UzP1jb+mzcRcFRl0vwXixHZEQ/K17MAAAAASUVORK5CYII=';
+    setTimeout(drawFav,0);
+})());
+</script>

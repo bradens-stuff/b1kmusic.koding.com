@@ -1,0 +1,41 @@
+<link id="fav" rel="icon" type="image/png" href="" />
+<body><p>Psst. Look at this tab's favicon</p></body>
+<script>
+var canvas = document.createElement('canvas');
+canvas.width = W = 16*20;
+canvas.height = H = 16*20;
+document.body.appendChild(canvas);
+ctx = canvas.getContext('2d');
+var s = 2*20;
+
+Particle = function(x,y,xvel,yvel,col){
+    this.p = {
+        x:x,
+        y:y
+    };
+    this.v = {
+        x:xvel,
+        y:yvel
+    };
+    this.run = function(){
+        this.p.x += this.v.x;
+        this.p.y += this.v.y;
+        this.v.y += 0.5;
+        if((this.p.x<=0&&this.v.x<0)||(this.p.x>=W-s&&this.v.x>0))this.v.x=-this.v.x;
+        if((this.p.y<=0&&this.v.y<0)||(this.p.y>=H-s&&this.v.y>0))this.v.y=-this.v.y/1.04;
+        ctx.fillStyle = col;
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(this.p.x,this.p.y,s,s);
+    };
+};
+var p = [new Particle(0,0,5,0,'#05f'),new Particle(0,H/2,8,-5,'#f05'),new Particle(0,H-50,-5,2,'#0f5')];
+(function loop(){
+    ctx.clearRect(0,0,W,H);
+    for(var i in p){
+        p[i].run();
+    }
+    img = canvas.toDataURL();
+    fav.href = img;
+    setTimeout(loop,1000/24);
+})();
+</script>

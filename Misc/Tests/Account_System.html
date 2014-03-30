@@ -1,0 +1,122 @@
+<div id=login>
+        User Name<input id=useri><br>
+        Pass Word<input id=passi type=password><br>
+        <tt>SHIFT+ENTER</tt> to Sign up, <tt>CTRL+ENTER</tt> to Log in
+</div>
+<script>
+document.title = 'Login Simulator';
+//localStorage
+//db.user.x represents database's permanent record of an account
+//user represents the temporary cookie holding the user encryption key, so you don't have
+//to log in every time you reload a page.
+var users = {}, user;
+if(!localStorage['db.users']){
+        localStorage['db.users'] = '{"track":0,"1":"null"}';
+        localStorage['user'] = '';
+        users = {track:0};
+}else{
+        users = JSON.parse(localStorage['db.users']);
+}
+SAVE = function(){
+        localStorage['db.users'] = JSON.stringify(users);
+        location.reload();
+};
+signUp = function(){
+        user = {
+                id:users.track,
+                name:useri.value,
+                pass:passi.value,
+                key:gen(30)//30 character encryption key
+        };
+        //localStorage['db.user.1']=JSON.stringify(user)
+        users[users.track] = user;
+        users.track++;
+        alert('now log in!');
+        SAVE();
+};
+logIn = function(){
+        var nameSuccess = false;
+        try{
+                for(i in users){//find user
+                        if(useri.value==users[i].name){
+                                nameSuccess = true;
+                                user = users[i];
+                        }else if(!nameSuccess){
+                                nameSuccess = false;
+                        }
+                }
+                if(!nameSuccess){
+                        throw 'No user by that name exists. Sign up instead';
+                }
+                if(passi.value==user.pass){
+                        alert('login successful');
+                        localStorage['user'] = user.key;
+                        location.reload();
+                }else{
+                        user = {};
+                        throw 'Username or password incorrect';
+                }
+        }catch(e){
+                alert(e);
+        }
+}
+logOut = function(){
+        localStorage.removeItem('user');
+        location.reload();
+};
+deleteAccount = function(){
+        if(!confirm('Are you sure you want to DELETE your account? This is permanent')){
+                return false;
+        }else if(!confirm('Are you REALLY SURE!? You can not get this accoutn back!')){
+                return false;
+        }
+        delete users[user.id];
+        localStorage.removeItem('user');
+        SAVE();
+};
+onload = function(){//auto logs in if the encryption keys match
+    user = {name:''};
+    success = false;
+    try{
+        if(!localStorage['user']){
+            throw "Not an error";
+        }
+        for(i in users){
+            if(localStorage['user']==users[i].key){
+                success = true;
+                user = users[i];
+            }else if(!success){
+                success = false;
+            }
+        }
+        if(!success){
+            throw "Not an error";
+        }
+    }catch(e){
+        success = false;//failsafe, make absolutely sure success is false
+    }
+    useri.value = user.name||'';
+    if(success){
+        login.innerHTML='Hello, '+user.name+' [<a href="javascript:logOut()">Log Out</a>] [<a href="javascript:deleteAccount()">Delete Account</a>]';
+    }else{
+        map = [];
+        passi.onkeydown = passi.onkeyup = function(e){
+            map[e.keyCode]=e.type=='keydown';
+            if(map[16]&&map[13]){
+                signUp();
+            }else if(map[17]&&map[13]){
+                logIn();
+            }
+        }
+        user = null;
+    }
+};
+gen = function(len){
+    var chars = 'QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890-', s = '', i = 0;
+    while(i < len){
+        s += chars[Math.floor(Math.random()*chars.length)];
+        i++;
+    }
+    return s;
+};
+</script>

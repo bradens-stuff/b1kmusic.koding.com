@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<script type="text/javascript" src="../js/Get.js"></script>
+<script>
+(function(){
+    var Key = storage.Paradigm.key,
+        Paradigm = storage[Key];
+    function addLink(){
+        var url = decodeURIComponent(g['url']),
+            title = decodeURIComponent(g['title']);
+    	Paradigm[Paradigm.links] = {link:url,title:title};
+    	Paradigm.links++;
+    	save();
+    	window.close();
+    };
+    if(g['url'] && g['title'])addLink();
+    else window.close();
+})();
+</script>

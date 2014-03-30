@@ -1,0 +1,74 @@
+<canvas id="canvas"></canvas>
+<script>
+var ctx = canvas.getContext('2d'), size = 50;
+doHour = function(){
+    /*Rusty red*/ctx.fillStyle = '#855';ctx.strokeStyle = '#855';
+    //Hour string
+    var h = (new Date().getHours()%12).toString();
+    if(h==0)h = '12';
+    /*Padding*/if(h.length==1)h = '0'+h;
+    //Tens n Ones
+    var tens = (h[0]*1).toString(2);//length: 2 (in binary)
+    var ones = (h[1]*1).toString(2);//length: 4
+    //Padding
+    var tl = tens.length, ol = ones.length;
+    tens = (tl==1?'0':'')+tens; ones = (ol==3?'0':ol==2?'00':ol==1?'000':'')+ones;
+    //Draw
+    var x = 0;
+    /*tens 2*/if(tens[0]==1)ctx.fillRect(x,size*4,size,size);else ctx.strokeRect(x,size*4,size,size);
+    /*tens 1*/if(tens[1]==1)ctx.fillRect(x,size*6,size,size);else ctx.strokeRect(x,size*6,size,size);
+    /*ones 8*/if(ones[0]==1)ctx.fillRect(x+(size*2),0,size,size);else ctx.strokeRect(x+(size*2),0,size,size);
+    /*ones 4*/if(ones[1]==1)ctx.fillRect(x+(size*2),size*2,size,size);else ctx.strokeRect(x+(size*2),size*2,size,size);
+    /*ones 2*/if(ones[2]==1)ctx.fillRect(x+(size*2),size*4,size,size);else ctx.strokeRect(x+(size*2),size*4,size,size);
+    /*ones 1*/if(ones[3]==1)ctx.fillRect(x+(size*2),size*6,size,size);else ctx.strokeRect(x+(size*2),size*6,size,size);
+};
+doMin = function(){
+    /*Navy blue*/ctx.fillStyle = '#558';ctx.strokeStyle = '#558';
+    //Minute string
+    var m = (new Date().getMinutes()).toString();
+    if(m.length==1)m = '0'+m;
+    //Tens n ones
+    var tens = (m[0]*1).toString(2);//length: 3
+    var ones = (m[1]*1).toString(2);//length: 4
+    //Padding
+    var tl = tens.length, ol = ones.length;
+    tens = (tl==2?'0':tl==1?'00':'')+tens; ones = (ol==3?'0':ol==2?'00':ol==1?'000':'')+ones;
+    //Draw
+    var x = size*6;
+    /*tens 4*/if(tens[0]==1)ctx.fillRect(x,size*2,size,size);else ctx.strokeRect(x,size*2,size,size);
+    /*tens 2*/if(tens[1]==1)ctx.fillRect(x,size*4,size,size);else ctx.strokeRect(x,size*4,size,size);
+    /*tens 1*/if(tens[2]==1)ctx.fillRect(x,size*6,size,size);else ctx.strokeRect(x,size*6,size,size);
+    /*ones 8*/if(ones[0]==1)ctx.fillRect(x+size*2,0,size,size);else ctx.strokeRect(x+size*2,0,size,size);
+    /*ones 4*/if(ones[1]==1)ctx.fillRect(x+size*2,size*2,size,size);else ctx.strokeRect(x+size*2,size*2,size,size);
+    /*ones 2*/if(ones[2]==1)ctx.fillRect(x+size*2,size*4,size,size);else ctx.strokeRect(x+size*2,size*4,size,size);
+    /*ones 1*/if(ones[3]==1)ctx.fillRect(x+size*2,size*6,size,size);else ctx.strokeRect(x+size*2,size*6,size,size);
+};
+
+doSec = function(){
+    /*Forest Green*/ctx.fillStyle = '#585';ctx.strokeStyle = '#585';
+    //Second String
+    var s = (new Date().getSeconds()).toString();
+    if(s.length==1)s = '0'+s;
+    //Tens n ones
+    var tens = (s[0]*1).toString(2);//length: 3
+    var ones = (s[1]*1).toString(2);//length: 4
+    //Padding
+    var tl = tens.length, ol = ones.length;
+    tens = (tl==2?'0':tl==1?'00':'')+tens; ones = (ol==3?'0':ol==2?'00':ol==1?'000':'')+ones;
+    //Draw
+    var x = size*12;
+    /*tens 4*/if(tens[0]==1)ctx.fillRect(x,size*2,size,size);else ctx.strokeRect(x,size*2,size,size);
+    /*tens 2*/if(tens[1]==1)ctx.fillRect(x,size*4,size,size);else ctx.strokeRect(x,size*4,size,size);
+    /*tens 1*/if(tens[2]==1)ctx.fillRect(x,size*6,size,size);else ctx.strokeRect(x,size*6,size,size);
+    /*ones 8*/if(ones[0]==1)ctx.fillRect(x+size*2,0,size,size);else ctx.strokeRect(x+size*2,0,size,size);
+    /*ones 4*/if(ones[1]==1)ctx.fillRect(x+size*2,size*2,size,size);else ctx.strokeRect(x+size*2,size*2,size,size);
+    /*ones 2*/if(ones[2]==1)ctx.fillRect(x+size*2,size*4,size,size);else ctx.strokeRect(x+size*2,size*4,size,size);
+    /*ones 1*/if(ones[3]==1)ctx.fillRect(x+size*2,size*6,size,size);else ctx.strokeRect(x+size*2,size*6,size,size);
+};
+
+(function loop(){
+    canvas.width = W = size*16;canvas.height = H = size*8;ctx.lineWidth = size/8;ctx.translate(size/8,size/8);
+    doHour();doMin();doSec();
+    setTimeout(loop, 1000);
+})();
+</script>

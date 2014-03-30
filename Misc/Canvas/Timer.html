@@ -1,0 +1,165 @@
+<script src='http://code.jquery.com/jquery-1.8.3.min.js'></script>
+<p>Better version: <a href="http://jsfiddle.net/B1KMusic/9MnES/show/" style="color:#aaa;">http://jsfiddle.net/B1KMusic/9MnES/show/</a></p>
+<canvas></canvas><br>
+<input maxlength='8'><br>
+<span></span>
+<audio></audio>
+<script>
+try{
+    if(jQuery){}
+}catch(e){
+	jQuery=false
+}
+$$=function(){return document.querySelectorAll.apply(document,arguments)}
+
+$$('span')[0].innerHTML='Enter Time then Press Enter'
+inp=$$('input')[0]
+inp.style.display='none'
+$$('span')[0].style.display='none'
+inp.placeholder='00:00:00'
+inp.value='00:00:00'
+
+canvas=$$('canvas')[0]
+canvas.width=185
+canvas.height=60
+ctx=canvas.getContext('2d')
+ctx.font='bold 38px monospace'
+ctx.strokeText('00:00:00',0,30)
+
+Started=false
+SMO=false//StartMouseOver
+UPDATESTART=function(){
+	ctx.clearRect(0,40,50,60)
+	ctx.fillStyle=!SMO?'#aaa':'#ccc'
+	canvas.style.cursor=!SMO?'auto':'pointer'
+	ctx.fillRect(0,40,50,20)
+	ctx.font='bold 14px monospace'
+	ctx.fillStyle='#000'
+	ctx.fillText(!Started?'Start':'Stop',!Started?5:8,55)
+	setTimeout(UPDATESTART,10)
+}
+UPDATESTART()
+CMO=false//ClearMouseOver
+UPDATECLEAR=function(){
+	ctx.clearRect(135,40,55,60)
+	ctx.fillStyle=!CMO?'#aaa':'#ccc'
+	canvas.style.cursor=!CMO?'auto':'pointer'
+	ctx.fillRect(135,40,55,20)
+	ctx.font='bold 14px monospace'
+	ctx.fillStyle='#000'
+	ctx.fillText('Reset',142,55)
+	setTimeout(UPDATECLEAR,10)
+}
+UPDATECLEAR()
+
+canvas.onmousemove=function(e){
+	X=e.offsetX;Y=e.offsetY
+	if(X>0&&Y>40&&X<50&&Y<60){//startbtn
+		SMO=true
+		CMO=false
+	}else if(X>135&&Y>40&&X<(135+55)&&Y<(60)){//resetbtn
+		SMO=false
+		CMO=true
+	}else{
+		SMO=false
+		CMO=false
+	}
+}
+canvas.onclick=function(e){
+	X=e.offsetX;Y=e.offsetY
+	if(X>0&&Y>40&&X<50&&Y<60){//startbtn
+		Started=Started?false:true
+		if(Started){
+			UPDATE()
+		}else{
+		    clearTimeout(loop)
+		}
+	}else if(X>135&&Y>40&&X<(135+55)&&Y<(60)){//clearbtn
+		CLEAR()
+	}
+}
+Init=function(){
+	if(jQuery){
+		$('input').fadeIn(500)
+		$('span').fadeIn(500)
+	}else{//no internet connection/jquery failed to load
+		inp.style.display='inline'
+		$$('span')[0].style.display='inline'
+	}
+	onkeyup=function(e){
+		if(e.keyCode==13){
+			t=inp.value
+			try{
+				ht=t[0]
+				ho=t[1]
+				// t[2] = :
+				mt=t[3]
+				mo=t[4]
+				// t[5] = :
+				st=t[6]
+				so=t[7]
+				ctx.clearRect(0,0,500,40)
+				ctx.font='bold 38px monospace'
+				ctx.fillText(ht+''+ho+':'+mt+''+mo+':'+st+''+so,0,30)
+
+				if(jQuery){
+					$('input').fadeOut(250)
+				}else{
+					inp.style.display='none'
+					$$('span')[0].style.display='none'
+				}
+			}catch(e){
+				alert('Enter a Valid Time')
+			}
+			loop=0
+		}else{
+			if(jQuery){
+				$('span').fadeOut(1000)
+			}
+		}
+	}
+}
+Init()
+UPDATE=function(){
+	ctx.clearRect(0,0,500,40)
+	so--
+	if(so<0){so=9;st--}
+	if(st<0){st=5;mo--}
+	if(mo<0){mo=9;mt--}
+	if(mt<0){mt=5;ho--}
+	if(ho<0){ho=9;ht--}
+	if(ht<0){ht=0}
+	ctx.font='bold 38px monospace'
+	ctx.fillStyle='#000'
+	timestr=(''+ht+''+ho+':'+mt+mo+':'+st+so)
+	ctx.fillText(timestr,0,30)
+	document.title=timestr
+	loop=setTimeout(UPDATE,1000)
+	if(ht==0&&ho==0&&mt==0&&mo==0&&st==0&&so==0){
+		//alert('Time Up\n\nClick Reset to reset')
+		document.title='Time up!'
+		clearTimeout(loop)
+		Started=false
+	}
+}
+CLEAR=function(){
+	clearTimeout(loop)
+	Init()
+}
+</script>
+<style>
+canvas{
+	background:#fff;
+	border:2px solid #ddd;
+}
+input{
+	width:70px;
+	height:20px;
+	position:fixed;
+	top:50px;
+	left:67px;
+	background:#000;
+	color:#fff;
+	font:14px monospace;
+}
+</style>

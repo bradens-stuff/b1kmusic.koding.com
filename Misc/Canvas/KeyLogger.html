@@ -1,0 +1,38 @@
+<body></body>
+<script>
+document.body.appendChild((function(){
+    canvas = document.createElement('canvas');
+    canvas.width = W = 155;
+    canvas.height = H = 500;
+    canvas.tabIndex = 0;
+    canvas.style.boxShadow = '#ddd 0px 0px 5px';
+    return canvas;
+})());
+var map = [], ytrack = 0, fps = 60;
+setCanvas = function(){
+    canvas.height = ytrack-35;
+	ctx = canvas.getContext('2d');
+	ctx.font = 'bold 32px Monospace';
+	ctx.fillStyle = '#000';
+};
+canvas.onkeydown = function(e){
+	e.preventDefault();
+	return false;
+};
+onkeydown = onkeyup = function(e){
+    map[e.keyCode] = e.type=='keydown';
+};
+(function loop(){
+	setCanvas();
+    ytrack = 40;
+    ctx.clearRect(0,0,W,H);
+    for(var a in map){
+        if(map[a]){
+            var glyph = String.fromCharCode(a), txt = (/[A-Z0-9]/).test(glyph)?' ('+glyph+')':'';
+            ctx.fillText(a+txt,10,ytrack);
+            ytrack+=50;
+        }
+    }
+    setTimeout(loop,1000/fps);
+})();
+</script>

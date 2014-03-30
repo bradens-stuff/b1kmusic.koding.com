@@ -1,0 +1,84 @@
+<canvas id="canvas" width="500" height="500" tabindex="0"></canvas>
+<script>
+var ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, mem = {}, fps = 24, key = [];
+var add,remove,render,Ball,Paddle,Midline,Info,Control,initGame;
+add = function(o){
+    var s = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', rs = function(){return s[Math.floor(Math.random()*s.length)];};
+    o.id = '';for(var i = 0; i < 15; i++){o.id+=rs()};
+    mem[o.id] = o;
+};
+remove = function(o){
+    delete mem[o.id];
+};
+render = function(o){
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+};
+Ball = function(x,y,w,h){
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.vx = 0;
+    this.vy = 0;
+    this.type = 'Ball';
+    this.run = function(){
+        render(this);
+    };
+    add(this);
+};
+Paddle = function(x,y,w,h,c){//c = controls, like 'WASD' and 'IJKL'
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    if(typeof(c)==='string'){this.c = [c.charCodeAt(0),c.charCodeAt(1),c.charCodeAt(2),c.charCodeAt(3)];}else{this.c = c;}
+    this.type = 'Paddle';
+    this.run = function(){
+        if(key[this.c[0]]){
+            console.log(this.id+': UP');
+        }else if(key[this.c[2]]){
+            console.log(this.id+': DOWN');
+        }
+        if(key[this.c[1]]){
+            console.log(this.id+': LEFT');
+        }else if(key[this.c[3]]){
+            console.log(this.id+': RIGHT');
+        }
+        render(this);
+    };
+    add(this);
+};
+Midline = function(x,y,w,h){
+    
+};
+Info = function(){
+    
+};
+Control = function(){
+    canvas.onkeydown = canvas.onkeyup = function(e){
+        key[e.keyCode] = e.type=='keydown';
+        return false;
+    };
+    this.type = 'Control';
+    this.run = function(){
+        //check keys like 'R' for reset and 'M' for menu
+    };
+    add(this);
+};
+initGame = function(){
+    new Ball(255,255,10,10);
+    new Paddle(0,0,10,100,'WASD');
+    new Paddle(W-10,0,10,100,[38,37,40,39]);
+    new Control();
+};
+((function(){
+    initGame();
+})());
+((function loop(){
+    ctx.fillStyle = '#000';ctx.fillRect(0,0,W,H);
+    for(var a in mem){mem[a].run();}
+    ctx.beginPath();for(var b=0.5;b<H;b+=2){ctx.moveTo(0,b);ctx.lineTo(W,b);}ctx.stroke();ctx.closePath();//scanlines
+    setTimeout(loop,1000/fps);
+})());
+</script>

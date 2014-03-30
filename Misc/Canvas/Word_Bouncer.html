@@ -1,0 +1,99 @@
+<body></body>
+<script>
+node = function(name,type,props,del){
+    document.body.appendChild((function(){
+        var e = window[name] = document.createElement(type);
+        for(var a in props){
+            window[name][a] = props[a];
+        }
+        if(del){
+            delete window[name];
+        }
+        return e;
+    })());
+};
+node('canvas','canvas',{
+    width:innerWidth,
+    height:innerHeight
+});
+node('style','style',{
+    innerText:'*{margin:0;padding:0;}'
+},true);
+ctx = canvas.getContext('2d');
+var particles = {}, mouse = {x:0,y:0,down:false}, rand = Math.random, W = canvas.width, H = canvas.height;
+randomPhrase = function(){
+    var p = [//phrases
+        'Hello, World!',
+        'I like cheese',
+        'Lol wut',
+        'Say hi',
+        'Potato!',
+        'Best of the Year!',
+        'asdf'
+    ];
+    var l = '0123456789ASDFGHJKLQWERTYUIOPZXCVBNM'//letters
+    return rand()<0.5
+        ?p[Math.floor(rand()*p.length)]
+        :l[Math.floor(rand()*l.length)];
+};
+add = function(o){
+    o.id = Math.floor(rand()*10000).toString(36);
+    particles[o.id] = o;
+};
+remove = function(o){
+    delete particles[o.id];
+};
+render = function(o){
+    ctx.save();
+    ctx.fillStyle = o.c;
+    ctx.font = 'bold 20px Monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(o.t,o.x,o.y+o.h);
+    ctx.restore();
+};
+RC = function(){
+    b = function(){
+        return Math.floor(rand()*255>>1);
+    };
+    return 'rgb('+b()+','+b()+','+b()+')';
+};
+Particle = function(){
+    this.x = mouse.x;
+    this.y = mouse.y;
+    this.w = 10;
+    this.h = 10;
+    this.c = RC();
+    this.t = randomPhrase();
+    this.v = [rand()<0.5?-rand()*10:rand()*10,-10];
+    this.run = function(){
+        this.x += this.v[0];
+        this.y += this.v[1];
+        this.v[1]++;
+        if(this.x<0||this.x>W)this.v[0]=-this.v[0];
+        if(this.y>H)this.v[1]=-this.v[1];
+        if(this.y<0)remove(this);
+        render(this);
+    };
+   add(this);
+};
+onmousedown = function(){mouse.down = true;};
+onmouseup = function(){mouse.down = false;};
+onmousemove = function(e){
+    mouse.x = (e.pageX||e.clientX||e.offsetX)-canvas.offsetLeft;
+    mouse.y = (e.pageY||e.clientY||e.offsetY)-canvas.offsetTop;
+    return false;
+};
+
+(function loop(){
+    if(innerHeight!=canvas.height||innerWidth!=canvas.width){
+        canvas.width = W = innerWidth;
+        canvas.height = H = innerHeight;
+    }
+    if(mouse.down){new Particle();}
+    ctx.clearRect(0,0,W,H);
+    for(var a in particles){
+        particles[a].run();
+    }
+    setTimeout(loop,1000/60);
+})();
+</script>

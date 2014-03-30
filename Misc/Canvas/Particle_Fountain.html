@@ -1,0 +1,70 @@
+<style>
+*{
+    margin:0;padding:0;
+}
+body{
+	background:#000;
+}
+canvas{
+	width:100%;
+    height:100%;
+}
+</style>
+<body></body>
+<script type="text/javascript">
+document.body.appendChild((function(){
+    canvas = document.createElement('canvas');
+    canvas.width = W = window.innerWidth;
+    canvas.height = H = window.innerHeight;
+    canvas.tabIndex = 0;
+    ctx = canvas.getContext('2d');
+    return canvas;
+})());
+
+var r = Math.random, f = Math.floor, rc = function(){return f(r()*255<<1)}, particles = [];
+
+render = function(o){
+    ctx.save();
+	ctx.fillStyle = o.c;
+    ctx.beginPath();
+    ctx.arc(o.x,o.y,o.r,Math.PI*2,false);
+    ctx.fill();
+    ctx.closePath();
+    ctx.restore();
+};
+
+Particle = function(x,y){
+    this.x = x;//x
+    this.y = y;//y
+    this.r = f(r()*5);//radius
+    this.v = [r()<.5?-r()*5:r()*5,-r()*H/25];//velocity
+    this.c = 'rgb('+rc()+','+rc()+','+rc()+')';//color
+    this.run = function(){//logic
+        this.x+=this.v[0];
+        this.y+=this.v[1];
+        this.v[1]+=.5;
+        if(this.y>=H-this.r&&this.v[1]>0){
+            this.v[1]=-this.v[1];
+            this.v[1]+=5;
+        }
+    	render(this);
+    };
+};
+spawnParticles = function(a){
+    for(var i=0;i<a;i++){
+            particles.push(new Particle(W/2,H));
+    }
+}
+setInterval(function(){
+    spawnParticles(10);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+	ctx.fillRect(0,0,W,H);
+    for(var a in particles){
+        var b = particles[a];
+        b.run();
+        if(b.y>H&&b.v[1]<1&&b.v[1]>-1){delete particles[a]}
+        if(b.x<0||b.x>W){delete particles[a]}
+    }
+
+},1000/24);
+</script>

@@ -1,0 +1,40 @@
+body{
+    font:12px monospace;
+    background:#ccc;
+}
+fieldset{
+	margin:10px;
+	padding:5px;
+	text-align:center;
+}
+input{
+	margin:10px;
+	padding:5px;
+	border:1px solid #ccc;
+	background:#eee;
+	min-width:200px;
+}
+input[type="text"]{
+    min-width:0;
+    width:188px;/*I had to fine tune this because apparently the doctype tag makes CSS go full-retard*/
+}
+input[type="Submit"], input[type="Button"]{
+	background:#ddd
+}
+input[type="Submit"]:hover, input[type="Button"]:hover{
+	background:#eee;
+	cursor:pointer;
+}
+input[selected]{
+    background:#5a5;
+}
+input[selected]:hover{
+    background:#8f8;
+}
+a[href]{
+    text-decoration:none;
+    color:#00f;
+}
+a[href]:hover{
+    color:#0ac;
+}

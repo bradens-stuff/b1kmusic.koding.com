@@ -1,0 +1,132 @@
+<style>
+div[body]{
+    background:#eee;
+    border:2px solid #333;
+    padding:10px;
+    width:800px;
+    margin:0px auto;
+}
+div#hidden{
+    display:none;
+}
+c{
+    display:inline;
+    font:10px monospace;
+    background:#ddd;
+    padding:5px;
+}
+code{
+    font:10px monospace;
+    background:#ddd;
+    border:2px solid #ccc;
+    display:block;
+    padding:5px;
+    padding-left:10px;
+}
+t{/*tab*/
+    display:inline-block;
+    width:20px;
+}
+</style>
+<div body>
+    <p>This background is randomly generated!</p>
+    <p>How did I do it?</p>
+    <hr>
+    <a href="javascript:hidden.style.display='block'">Show</a>
+    <div id="hidden">
+        <p>First, create a <c>&lt;canvas&gt;</c> element and get its rendering context:</p>
+        <code>
+            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+        </code>
+        <p>Then, create a method to create a random red, blue, or green value. I named the function <c>rcb()</c> to stand for "random color base"</p>
+        <code>
+            var rcb = function(){return Math.floor(Math.random()*255)};
+        </code>
+        <p>Next, define the canvas's width and height:</p>
+        <code>
+            canvas.width = W = canvas.height = H = 400;
+        </code>
+        <p>Now, we will draw the background</p>
+        <code>
+            for(var i = 0; i &lt; H; i+=10){<br>
+            <t></t>for(var j = 0; j &lt; W; j+=10){<br>
+            <t></t><t></t>ctx.fillStyle = 'rgb('+rcb()+','+rcb()+','+rcb()+')';<br>
+            <t></t><t></t>ctx.fillRect(j,i,8,8);<br>
+            <t></t>}<br>
+            }<br>
+        </code>
+        <p>That code generates a tile-like grid of squares in random color, here's what it looks like:</p>
+        <code>
+            <img id="ex_img"><br>
+            <input id="ex_img_btn" type="button" value="Re-generate">
+        </code>
+        <p>Finally, create a <c>&lt;style&gt;</c> element to apply the picture to the background:</p>
+        <code>
+            var style = document.createElement('style');<br>
+            style.type = 'text/css';<br>
+            style.innerHTML = 'body{background:url(\''+canvas.toDataURL()+'\')}';<br>
+            document.body.appendChild(style);
+        </code>
+        <p>Altogether, here's the code:</p>
+        <code>
+            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), rcb = function(){return Math.floor(Math.random()*255)};<br>
+            canvas.width = W = canvas.height = H = 400;<br>
+            for(var i = 0; i &lt; H; i+=10){<br>
+            <t></t>for(var j = 0; j &lt; W; j+=10){<br>
+            <t></t><t></t>ctx.fillStyle = 'rgb('+rcb()+','+rcb()+','+rcb()+')';<br>
+            <t></t><t></t>ctx.fillRect(j,i,8,8);<br>
+            <t></t>}<br>
+            }<br>
+            var style = document.createElement('style');<br>
+            style.type = 'text/css';<br>
+            style.innerHTML = 'body{background:url(\''+canvas.toDataURL()+'\')}';<br>
+            document.body.appendChild(style);
+        </code>
+        <p>Alternatively, for the <c>rcb()</c> function, you can use a different formula to generate only 8 colors</p>
+        <p>Take the example:</p>
+        <code>
+            rcb = function(){<br>
+            <t></t>return Math.floor(Math.random()*255);<br>
+            };
+        </code>
+        <p><i>But wait! Isn't this the exact snippet you just showed?</i> Yes it is, this is to point out the use of <c>Math.floor()</c> and the placement of <c>255</c></p>
+        <p>Notice that <c>255</c> is placed <i>inside</i> <c>Math.floor()</c>. Versus the following, which first rounds the random number to 0 or 1, and then multiplies it by 255, basically black and white with no grey areas:</p>
+        <code>
+            rcb = function(){<br>
+            <t></t>return Math.round(Math.random())*255<br>
+            };
+        </code>
+        <p>Which renders this:</p>
+        <code>
+            <canvas id="c8" width="400" height="400"></canvas>
+            <script>(function(){var c8x = c8.getContext('2d'), b = function(){return Math.round(Math.random())*255};for(var i = 0; i < 400; i += 10){for(var j = 0; j < 400; j += 10){c8x.fillStyle = 'rgb('+b()+','+b()+','+b()+')';c8x.fillRect(j,i,8,8);}}})();</script>
+        </code>
+    </div>
+</div>
+<script>
+
+var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), rcb = function(){return Math.floor(Math.random()*255)};
+canvas.width = W = 400;canvas.height = H = 400;
+generate = function(){
+    for(var i = 0; i < H; i+=10){
+        for(var j = 0; j < W; j+=10){
+            ctx.fillStyle = 'rgb('+rcb()+','+rcb()+','+rcb()+')';
+            ctx.fillRect(j,i,8,8);
+        }
+    }
+    var style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = 'body{background:url(\''+canvas.toDataURL()+'\')}';
+    document.body.appendChild(style);
+    ex_img.src = canvas.toDataURL();
+};
+generate();
+ex_img_btn.onclick = generate;
+</script>
+
+
+
+
+
+
+

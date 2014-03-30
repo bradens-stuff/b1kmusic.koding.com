@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="../css/Main.css">
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<script type="text/javascript" src="../js/Get.js"></script>
+<fieldset>
+    <legend id="title">Add a New Link</legend>
+	<form name="add_link" onsubmit="addLink()">
+		<input type="text" placeholder="URL (http://example.com/)"><br>
+		<input type="text" placeholder="Title (Example)"><br>
+		<input type="Submit" value="Submit"><hr>
+		<p>Fill out the form and Submit to add a new link</p>
+        <p>Take this with you as a Bookmarklet! Drag this into your bookmarks:<br><br><a id="bm1" draggable="true" style="background:#ddd; width:100px; padding:5px;">Add Link</a></p>
+        <p>[New!] Use this to automatically add a page by the click of a bookmarklet:<br><br><a id="bm2" draggable="true" style="background:#ddd; width:100px; padding:5px;">Auto Add Link</a></p>
+        <script>
+        (function(){
+            bm1.href=href="javascript:var a=location.href,b=document.title;window.open('"+location.href+"?url='+encodeURIComponent(a)+'&title='+encodeURIComponent(b)+'','','height=250,width=300,scrollbars=no');void 0;";
+            bm2.href=href="javascript:var a=location.href,b=document.title;window.open('"+location.href.replace('AddLink','AutoAddLink')+"?url='+encodeURIComponent(a)+'&title='+encodeURIComponent(b)+'','','height=250,width=300,scrollbars=no');void 0;";
+        })();
+        </script>
+	</form>
+</fieldset>
+<script type="text/javascript" src="../js/Prefs.js"></script>
+<script>
+Key = storage.Paradigm.key;
+Paradigm = storage[Key];
+title.innerHTML = 'Add a New Link to '+Key;
+
+if(g['url']){
+    add_link.children[0].value = decodeURIComponent(g['url']);
+}
+if(g['title']){
+    add_link.children[2].value = decodeURIComponent(g['title']);
+}
+for(var i in g){//Hides the "Take this Bookmarklet with you!" message if there is a var in the query string
+    add_link.children[7].style.display = 'none';
+}
+
+addLink = function(){
+	var f = add_link.children, url = f[0].value, title = f[2].value;
+	Paradigm[Paradigm.links]={link:url,title:title};
+	Paradigm.links++;
+	save();
+	window.close();
+}
+</script>

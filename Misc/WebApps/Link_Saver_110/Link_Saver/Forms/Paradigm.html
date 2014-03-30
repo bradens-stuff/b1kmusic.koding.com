@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="../css/Main.css">
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<script type="text/javascript" src="../js/Get.js"></script>
+<fieldset>
+    <legend id="title"></legend>
+    <form name="paradigm" onsubmit="paradigmAction()"></form>
+</fieldset>
+<script type="text/javascript" src="../js/Prefs.js"></script>
+<script>
+var propExists = false;
+_save = function(){
+    save();
+    window.close();
+}
+addParadigm = function(){
+    var par = paradigm.children[0].value;
+    if(par == 'Paradigm' || par == 'Config'){
+        alert('Cannot Use '+par+' as a Paradigm name. It is reserved.');
+        window.close();
+        return false;
+    }
+    for(var i in storage.Paradigm.list){
+        if(par == i){
+            alert('Paradigm already exists');
+            window.close();
+            return false;
+        }
+    }
+    storage.Paradigm.list[par] = par;
+    storage.Paradigm.key = par;
+    storage[par] = {
+        links:0
+    };
+    _save();
+}
+selectParadigm = function(item){
+    storage.Paradigm.key = item;
+    _save();
+}
+removeParadigm = function(item){
+    var count = 0;
+    if(!confirm('Are you sure you wish to delete paradigm '+item+'?')){
+        window.close();
+        return false;
+    }
+    for(var i in storage.Paradigm.list){
+        count++;
+    }
+    if(count<2){//Prevent user from deleting ALL paradigms
+        window.close();
+        return false;
+    }
+    delete storage.Paradigm.list[item];//Delete pointer
+    delete storage[item];//Delete associated data
+    if(storage.Paradigm.key == item){
+        for(var i in storage.Paradigm.list){
+            storage.Paradigm.key = storage.Paradigm.list[i];
+            break;
+        }
+    }
+    _save();
+}
+for(var i in g){
+    propExists = true;
+}
+if(propExists){
+    if(g['method'] == 'add'){
+        paradigmAction = addParadigm;
+        title.innerHTML = 'Add a New Paradigm';
+        paradigm.innerHTML = '<input type="text" placeholder="Enter Paradigm Name"><br><input type="Submit" value="Submit"><br><p>Enter a name for your paradigm and submit.</p>';
+    }else if(g['method'] == 'select'){
+        paradigmAction = null;
+        title.innerHTML = 'Select a Paradigm';
+        for(var i in storage.Paradigm.list){
+            var item = storage.Paradigm.list[i];
+            paradigm.innerHTML+='<input type="Button" '+(item==storage.Paradigm.key?'selected':'')+' onclick="selectParadigm(\''+item+'\')" value="'+item+' ('+(storage[item].links)+')"><br>';
+        }
+        resizeTo(300,document.height+70);
+    }else if(g['method'] == 'remove'){
+        paradigmAction = null;
+        title.innerHTML = 'Remove a Paradigm';
+        for(var i in storage.Paradigm.list){
+            var item = storage.Paradigm.list[i];
+            paradigm.innerHTML+='<input type="Button" onclick="removeParadigm(\''+item+'\')" value="'+item+'"><br>';
+        }
+        resizeTo(300,document.height+70);
+    }else{//if url is invalid
+        window.close();
+    }
+}else{//if no url vars
+    window.close();
+}
+</script>

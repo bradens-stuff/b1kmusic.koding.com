@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="../css/Main.css">
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<fieldset>
+    <legend>Backup and Restore</legend>
+    <form name="backup_restore" onsubmit="backup()">
+        <input type="text"><br>
+        <input type="Submit" value="Submit"><hr>
+        <input type="Button" value="Clear" onclick="_clear()">
+    </form>
+</fieldset>
+<script type="text/javascript" src="../js/Prefs.js"></script>
+<script>
+var stg = backup_restore.children[0];
+stg.value = JSON.stringify(storage);
+stg.selectionStart = 0;
+stg.selectionEnd = stg.value.length;
+stg.focus();
+backup = function(){
+    var f = backup_restore.children, string = f[0].value;
+    try{
+        var a = JSON.parse(string);
+        if(a.Config.lastSave){//if It can pull this from it, the object is safe
+            storage = a;
+            save();
+            window.close();
+        }
+    }catch(e){//Somethine likely went wrong in the lastSave check, meaning the object must be invalid
+        alert('Something went wrong with reading the data. The data is invalid');
+        window.close();
+        return false;
+    }
+}
+_clear = function(){
+    if(!confirm('Are you sure you want to purge your data?')){
+        window.close();
+        return false;
+    }
+    clearStorage();
+    window.close();
+}
+</script>

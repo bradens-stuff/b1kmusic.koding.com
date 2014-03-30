@@ -1,0 +1,303 @@
+<div id=wrap>
+    <div id=add>[+]</div><hr id=hr>
+	<div id=div></div><hr id=hr>
+	<input id=clr value=Clear type=button> [<a href="javascript:SUBLINK()" title="hides last item from list">--</a>] [<a href="javascript:ADDLINK()" title="unhides last hidden item">+</a>]
+    <p>Warning: This is an <B>OLD VERSION</B> of the Link Saver. For the latest version, click <a href="http://b1kmusic.koding.com/Misc/WebApps/Link_Saver_110/">here</a></p>
+</div>
+<script>
+
+C={
+	form:
+	'LINK&nbsp;&nbsp;&nbsp;<input id=inp class=inp><br>'+
+	'TITLE&nbsp;&nbsp;&nbsp;<input id=inp2 class=inp><br>'+
+	'<input value=ADD type=button id=sub> <input value=CANCEL type=button id=can><br>'
+}
+
+add.onclick=function(){
+	add.innerHTML=C.form//change to form
+	add.onclick=null
+	add.onmouseover=null
+	add.onmouseout=null//disable mouse functions
+	
+	function Enter(){
+		Links++
+		data='<a href="'+inp.value+'">'+inp2.value+'</a> [<a href="javascript:EDIT('+Links+')">edit</a>] [<a href="javascript:REMOVE('+Links+')">remove</a>]'
+		LS('link.'+Links,data)
+		LS('links',Links)
+		location.reload()
+	}
+	function submit(e){
+		e.keyCode==13?Enter():null
+	}
+	inp.onkeydown=submit
+	inp2.onkeydown=submit
+	sub.onclick=Enter
+	can.onclick=function(){location.reload()}
+	add.className='form'
+}
+add.onmouseover=function(){
+	a=function(x){add.innerHTML=x}//animation function
+	af1=[//animation frames
+		'[A]',
+		'[AD]',
+		'[ADD]',
+		'[ADD ]',
+		'[ADD N]',
+		'[ADD NE]',
+		'[ADD NEW]',
+		'[ADD NEW ]',
+		'[ADD NEW L]',
+		'[ADD NEW LI]',
+		'[ADD NEW LIN]',
+		'[ADD NEW LINK]',
+		'[ADD NEW LINK!]',
+		'[ADD NEW LINK!!]',
+	]
+	af2=[//ANIMATION #2
+		'[AZC ETV TG61]',
+		'[BQR FGS HGF7]',
+		'[KJS D45 IUSD]',
+		'[JHS TWE DUGF]',
+		'[IUT ESR SKLJ]',
+		'[FOG SLJ DAKF]',
+		'[APC ETV TG61]',
+		'[ADO QGS HGF7]',
+		'[ADD T45 IUSD]',
+		'[ADD NPE DUGF]',
+		'[ADD NEQ SKLJ]',
+		'[ADD NEW LAKF]',
+		'[ADD NEW LIAJ]',
+		'[ADD NEW LINO]',
+		'[ADD NEW LINK]',
+	]
+	af=af2
+	count=0
+	speed=25
+	for(i in af){
+		count+=speed
+		setTimeout('a("'+af[i]+'")',count)
+	}
+}
+add.onmouseout=function(){
+	add.innerHTML='[+]'
+}
+
+onload=function(){
+
+	LS=function(KEY,VAL){//get or set localstorage item
+		action=(VAL?'set':'get')
+		if(action=='get'){
+			return localStorage[KEY]
+		}else{
+			localStorage[KEY]=VAL
+		}
+	}
+	EDIT=function(KEY,removed){//KEY = key, removed = whether the link was created by the remove function
+		var optout=confirm('Sure you want to '+(removed?'restore?':'edit?'))
+		if(!optout){
+			return false
+		}
+		if(!removed){//edit link
+			var ELINK=prompt('Enter new url',/href="([^"]*)"/.exec(localStorage['link.'+KEY])[1])
+			var ENAME=prompt('Enter new name',/\>([^\<]*)/.exec(localStorage['link.'+KEY])[1])
+		}else{//restore link
+			var ELINK=prompt('Enter new url','http://i-was-too-lazy-to-add-a-url.com')
+			var ENAME=prompt('Enter new name','RESTORED AND UNNAMED')
+		}
+		localStorage['link.'+KEY]='<a href="'+ELINK+'">'+ENAME+'</a> [<a href="javascript:EDIT('+KEY+')">edit</a>] [<a href="javascript:REMOVE('+KEY+')">remove</a>]'
+		location.reload()
+	}
+	REMOVE=function(KEY){
+		var ENAME=/\>([^\<]*)/.exec(localStorage['link.'+KEY])[1]
+		var optout=confirm('Are you sure you want to DELETE the selection "'+ENAME+'"?')
+		if(!optout){
+			return false
+		}else{
+			var optout2=confirm('Really Sure? (You CANT get this back)')//double optout
+			if(!optout2){
+				return false
+			}
+		}
+		localStorage['link.'+KEY]='<i>REMOVED</i>  [<a href="javascript:EDIT('+KEY+',true)">restore</a>]'
+		location.reload()
+	}
+	SUBLINK=function(){//Subtract link
+		LS('links', (parseInt(LS('links'))-1))
+		location.reload()
+	}
+	ADDLINK=function(){//Add link
+		LS('links', (parseInt(LS('links'))+1))
+		location.reload()
+	}
+	/*
+		ONLOAD WRITE
+		ONLOAD WRITE
+		ONLOAD WRITE
+	*/
+	Links=LS('links')?LS('links'):0//tracker variable to make the onload write work
+	breaker='<hr>'
+	//breaker='<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>'
+	for(i=0;i<LS('links');i++){
+		div.innerHTML=breaker+'<p link><small>'+(((i+1)<10?'0':'')+(i+1))+'</small>) '+(LS('link.'+(i+1)))+'</p>'+div.innerHTML
+	}
+	div.innerHTML=div.innerHTML.replace(breaker,'')//replace first break (at the top)
+	/*
+		ONLOAD WRITE
+		ONLOAD WRITE
+		ONLOAD WRITE
+	*/
+	clr.onclick=function(e){
+		var optout=confirm('This is a dangerous button you just clicked. Only proceed if you are ABSOLUTELY SURE you want to delete every single link space and start fresh')
+		if(!optout){return false}else{
+			var optout2=confirm('Are you sure? This is everything that\'s getting deleted. You should consider backing up any important links.')
+			if(!optout2){
+				return false
+			}
+		}
+		for(i=0;i<LS('links');i++){
+			localStorage.removeItem('link.'+(i+1))
+		}
+		localStorage.removeItem('links')
+		location.reload()
+	}
+	document.title='link protector'
+}
+//dynamically allows for infinite links under a link.x paradigm
+
+</script>
+<style>
+
+body{
+	background:#333;
+	font:16px arial black;
+}
+
+#wrap{
+	width:700px;
+	background:#ddd;
+	border:#000;
+	box-shadow:#000 3px 3px 2px;
+	margin:20px auto;
+	padding:10px;
+}
+
+#div{
+	max-height:400px;
+	overflow-y:auto;
+	padding:5px;
+}
+
+.inp,#clr{
+	-webkit-transition:.25s;
+}
+.inp{
+	width:150px;
+	background:#ddd;
+	border-top:2px solid #ddd;
+	border-bottom:2px solid #333;
+	border-left:2px solid #ddd;
+	border-right:2px solid #ddd;
+}
+.inp:hover{
+	-webkit-transform:scale(1.1);
+	background:#eee;
+	border:2px solid black;
+}
+#clr, #sub, #can{
+	width:80px;
+	height:30px;
+	font:16px arial black;
+	color:#333;
+	background:-webkit-linear-gradient(top, #ddd, #aaa);
+	cursor:hand;
+}
+#can{
+	width:85px;
+	-webkit-transition:.25s;
+}
+#clr:hover, #sub:hover, #can:hover{
+	-webkit-transform:scale(1.2);
+}
+#sub{
+	margin:10px 0px 0px -10px;
+	-webkit-transition:.25s;
+}
+
+#hr{
+	height:5px;
+	background:#aaa;
+}
+
+a[href]{
+	color:#22f;
+	text-decoration:none;
+}
+a[href]:hover{
+	color:#0ce;
+}
+p[link]{
+	margin: -5px 0px;
+	cursor:hand;
+	
+	max-width:700px;
+	white-space:nowrap;
+	overflow-x:auto;
+}
+p[link]:hover{
+	background:#eee;
+}
+small{
+	font-size:12px;
+}
+#add{
+	background:#ddd;
+	display:inline-block;
+	padding:5px 10px;
+	cursor:hand;
+}
+#add:hover{
+	-webkit-transition:.5s;
+	background:#eee;
+}
+#add.form{
+	display:block;
+	cursor:default;
+}
+#add.form:hover{
+	background:#ddd;
+}
+
+/*Scrollbar for div*/
+
+#div::-webkit-scrollbar {
+	width:10px;
+}
+p[link]::-webkit-scrollbar{
+	width:7px;
+	height:7px;
+}
+
+#div::-webkit-scrollbar-track-piece,
+p[link]::-webkit-scrollbar-track-piece{
+	background:#777;
+	//border-radius:5px;
+}
+
+#div::-webkit-scrollbar-thumb:vertical,
+p[link]::-webkit-scrollbar-thumb:horizontal {
+	background: #999;
+	border:2px solid #777;
+	cursor:hand;
+	//border-radius:5px;
+}
+#div::-webkit-scrollbar-thumb:vertical:hover,
+p[link]::-webkit-scrollbar-thumb:horizontal:hover{
+	background:#bbb;
+}
+#div::-webkit-scrollbar-thumb:vertical:active,
+p[link]::-webkit-scrollbar-thumb:horizontal:active{
+	background:#999;
+}
+/*/
+
+</style>

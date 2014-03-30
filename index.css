@@ -1,0 +1,21 @@
+/*Stylesheet for indexes*/
+
+body{
+    font:12px Monospace;
+}
+a{
+    color:#00f;
+    text-decoration:none;
+    width:30%;
+}
+a:hover{
+    color:#0ce;
+}
+a,p[desc]{
+    display:inline-block;
+    margin-bottom:10px;
+    border-bottom:1px solid #aaa;
+}
+p[desc]{
+    width:70%;
+}

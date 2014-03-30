@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="../css/Main.css">
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<script type="text/javascript" src="../js/Get.js"></script>
+<fieldset>
+    <legend id="title">Search</legend>
+    <form name="search">
+        <input type="text" name="term" autofocus placeholder="Enter your search query"><br>
+        <input type="Button" value="Search" onclick="Search()"><hr>
+        Note: The search algorithm uses Regular Expressions. <a onclick="resizeTo(1000,1000)" href="http://en.wikipedia.org/wiki/Regular_expression">Learn More</a>.
+    </form>
+</fieldset>
+<script type="text/javascript" src="../js/Prefs.js"></script>
+<script>
+var results_exist = false;
+for(var i in g){
+    title.innerHTML = 'Search Results';
+    search.innerHTML = '';
+}
+if(g['q']){
+    var term = decodeURIComponent(g['q']);
+    search.style.textAlign = 'left';
+    search.innerHTML = 'Results for <b>'+term+'</b>:<hr>';
+    for(var i in storage){
+        if(i!='Paradigm'&&i!='Config'){
+            if(RegExp(term,'i').test(JSON.stringify(storage[i]))){
+                search.innerHTML += '<br>In <b>'+i+'</b><br>';
+                for(var j in storage[i]){
+                    if(j!='links'){
+                        if(RegExp(term,'i').test(storage[i][j].title)){
+                            var t = storage[i][j].title;
+                            var ot = RegExp(term,'gi').exec(t)[0];
+                            var h = t.replace(RegExp(term,'i'),'<b>'+ot+'</b>');//t = title, h = highlight
+                            search.innerHTML += 'In Title: <a onclick="resizeTo(1000,1000)" href="'+storage[i][j].link+'">'+h+'</a><br>';
+                            results_exist = true;
+                        }else if(RegExp(term,'i').test(storage[i][j].link)){
+                            search.innerHTML += 'In URL: <a onclick="resizeTo(1000,1000)" href="'+storage[i][j].link+'">'+storage[i][j].title+'</a><br>';
+                            results_exist = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if(!results_exist){
+        search.innerHTML += 'No results match this term';
+    }
+    search.innerHTML += '<hr><center><input type="Button" value="Reset" onclick="resetPage()" /></center>';
+}else{
+    search.children[0].onkeydown = function(e){
+        if(e.keyCode==13){
+            Search();
+            e.preventDefault();
+            return false;
+            //Prevent form default from breaking it
+        }
+    }
+}
+Search = function(){
+    var f = search.children, term = f[0].value;
+    location.href = '?q='+encodeURIComponent(term);
+    resizeTo(1000,1000);
+}
+if((/\?q/).test(location.href)){
+    resizeTo(1000, (innerHeight||document.height)+100);
+}
+resetPage = function(){
+    location.href = '?';
+    resizeTo(300, 250);
+}
+</script>

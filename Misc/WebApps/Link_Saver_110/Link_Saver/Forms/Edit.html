@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="../css/Main.css">
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<script type="text/javascript" src="../js/Get.js"></script>
+<fieldset>
+    <legend>Edit a Link</legend>
+    <form name="edit_link" onsubmit="editLink()">
+        <input type="text"><br>
+        <input type="text"><br>
+        <input type="Submit" value="Submit">
+    </form>
+</fieldset>
+<script type="text/javascript" src="../js/Prefs.js"></script>
+<script>
+item = storage[storage.Paradigm.key][g['id']];
+edit_link.children[0].value = item.link;
+edit_link.children[2].value = item.title;
+editLink = function(){
+    var f = edit_link.children, url = f[0].value, title = f[2].value;
+    item.link = url;
+    item.title = title;
+    save();
+	window.close();
+}
+</script>

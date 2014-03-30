@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="../css/Main.css">
+<script type="text/javascript" src="../js/Storage.js"></script>
+<script type="text/javascript" src="../js/Sync.js"></script>
+<fieldset>
+    <legend>Settings</legend>
+    <form name="settings" onsubmit="Settings()">
+        Per Page setting:<br>
+        <input type="text" placeholder="A number"><hr>
+        Background:<br>
+        <input type="text" placeholder="An HTML hexadecimal color"><hr>
+        <input type="Submit" value="Submit">
+    </form>
+</fieldset>
+<script type="text/javascript" src="../js/Prefs.js"></script>
+<script>
+settings.children[1].value = storage.Config.perPage||10;
+settings.children[4].value = storage.Config.background||'CCC';
+Settings = function(){
+    var f = settings.children;
+    storage.Config.perPage = parseInt(f[1].value);
+    storage.Config.background = f[4].value;
+    save();
+    window.close();
+}
+resizeTo(300, document.height+70);
+</script>

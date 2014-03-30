@@ -1,0 +1,790 @@
+<!--Didn't bother going in and optimizing this. The code is far too unorganized!-->
+<div id=wrap>
+    <div topbutton id=add title="[CTRL+SHIFT+A]">[+]</div> <div topbutton id=change title="[CTRL+SHIFT+C]">[~]</div> <div topbutton id=rempar title="[CTRL+SHIFT+R]">[&ndash;]</div><hr id=hr>
+	<div id=div></div><hr id=hr>
+	<input id=clr value=Clear type=button> [<a href="javascript:ADDLINK()" title="[SHIFT++] unhide last hidden item">+</a>]<span id=ex> (<a href="javascript:ADDLINK(5)" title="unhide last 5 hidden items">5</a>,<a href="javascript:ADDLINK(10)" title="unhide last 10 hidden items">10</a>)</span> [<a href="javascript:SUBLINK()" title="[SHIFT+-] hide last item from list">&ndash;</a>]<span id=ex> (<a href="javascript:SUBLINK(5)" title="hide last 5 items from list">5</a>,<a href="javascript:SUBLINK(10)" title="hide last 10 items from list">10</a>)</span> [<a href="javascript:CHANIM()" title="[SHIFT+C]Change animation">~</a>]<span id=ex> (<a href="javascript:CHANIM(1)">1</a>,<a href="javascript:CHANIM(2)">2</a>,<a href="javascript:CHANIM(3)">3</a>,<a href="javascript:CHANIM(4)">4</a>)</span> [<a href="javascript:SWAPLINKS()" title="[SHIFT+S] Swap two links">S</a>] [<a href="javascript:EXTRA()" title="[SHIFT+X] Show/Hide Extra Options">X</a>]
+	<span id=ex><hr id=hr><input id=clrall value="Clear Everything" type=button></span>
+    <p>Warning: This is an <B>OLD VERSION</B> of the Link Saver. For the latest version, click <a href="http://b1kmusic.koding.com/Misc/WebApps/Link_Saver_110/">here</a></p>
+</div>
+<script>try{
+
+//Local Storage vars used so far.
+
+//LSKEY 	- the "file" under which links are stored, essentially a directory, or paradigm
+//LSLIST 	- list of said files, so I don't forget what I have.
+//[LSKEY].x - Paradigm where infinite links can be stored under, the main engine behind this mofo
+//[LSKEY]s 	- Tracker var that tells the write loop how many links to write. Also very important to the engine
+//af		- stands for animation frames; saves the animation pointer for the [+], [~], and [-] buttons
+//ex		- extra options toggle state
+
+C={
+	form:
+	'LINK&nbsp;&nbsp;&nbsp;<input id=inp class=inp><br>'+
+	'TITLE&nbsp;&nbsp;&nbsp;<input id=inp2 class=inp><br>'+
+	'<input value=ADD type=button id=sub> <input value=CANCEL type=button id=can><br>',
+	cform://C(hange)FORM
+	'NEW KEY&nbsp;&nbsp;&nbsp;<input id=cinp class=inp value=link>'
+}
+if(!localStorage['LSKEY']){
+	localStorage['LSKEY']='link'
+	location.reload()
+}
+if(!localStorage['LSLIST']){
+	localStorage['LSLIST']='link, fave'//if there's only one, some messed up glitches happen
+	location.reload()
+}
+if(!localStorage['af']){
+	localStorage['af']='af1'
+}
+LSKEY=localStorage['LSKEY']//Local Storage Key
+LSLIST=localStorage['LSLIST']//List of Used Keys
+
+rempar.onclick=REM=function(){
+	try{
+		rempar.innerHTML='Pick from List: <br>'+('<a id=lslist>'+LSLIST.replace(/, /g,'</a><br><a id=lslist>')+'</a>')//LSLIST.replace(', null','').replace(/,/g,'<br>')
+		//'List: <br>'+LSLIST.replace(', null','').replace(/,/g,'<br>')
+		rempar.onclick=null
+		rempar.onmouseover=null
+		rempar.onmouseout=null
+		rempar.className='form'
+		var optout=confirm('Sure you want to remove a paradigm? Make sure to first:\n1) Go to the paradigm\n2) Hit the [+] button on the bottom until you see "undefined"\n3) Hit the clear button in that paradigm to remove its data. \n\nYou don\'t want garbage data clogging your computer\'s memory ;)')
+		if(!optout){
+			location.reload()
+			return false//incase location.reload doesn't trigger in time; this will prevent glitches
+		}
+		LSCLICK=function(e){
+			LSKEY=e.target.innerHTML
+			REMPAR()
+		}
+		for(i in lslist){
+			lslist[i].onclick=LSCLICK//add functionality to every list item
+		}
+	}catch(e){
+		alert('and error occured.\n\nDetails: '+e+'\n(this error could be caused by the list having only one item)\n\nRestarting Page...')
+		location.reload()
+	}
+}
+rempar.onmouseover=function(){
+	a=function(x){rempar.innerHTML=x}//animation function
+	af1=[//ANIMATION #1
+		'[R]',
+		'[RE]',
+		'[REM]',
+		'[REMO]',
+		'[REMOV]',
+		'[REMOVE]',
+		'[REMOVE ]',
+		'[REMOVE K]',
+		'[REMOVE KE]',
+		'[REMOVE KEY]',
+	]
+	af2=[//ANIMATION #2
+		'[GDHFTY DKF]',
+		'[AFHDSA IUF]',
+		'[FHDHQG EFD]',
+		'[AHKDSO HFD]',
+		'[HGLKSQ DFI]',
+		'[SHFKFP HDF]',
+		'[RDIIHA GFF]',//first letter appears here
+		'[REVSSM DFA]',
+		'[REMHDN SES]',
+		'[REMOEW RYW]',
+		'[REMOVY REY]',
+		'[REMOVE TEW]',
+		'[REMOVE KTR]',
+		'[REMOVE KEP]',
+		'[REMOVE KEY]',
+	]
+	af3=[//ANIMATION #3
+		'REM',
+		'REMOVE',
+		'REMOVE KEY',
+	]
+	af4=[//ANIMATION #4
+		'REMOVE',
+		'REMOVE',
+		'REMOVE',
+		'REMOVE',
+		'REMOVE',
+		'KEY',
+		'KEY',
+		'KEY',
+		'KEY',
+		'KEY',
+		'REMOVE KEY',
+	]
+	af4=[
+		'0101001001000101010011',
+		'0101001111010101100100',
+		'0101001000000100101101',
+		'0001010101100101100100',
+		'0010101010010101001010',
+		'1010101010101001101001',
+		'1010101010010001010010',
+		'0100101101010100101010',
+		'1100100100101000',
+		'110010100101',
+		'REMOVE KEY',
+	]
+	//af=af1
+	af=eval(localStorage['af'])
+	count=0
+	speed=25
+	for(i in af){
+		count+=speed
+		setTimeout('a("'+af[i]+'")',count)
+	}
+}
+rempar.onmouseout=function(){
+	setTimeout("rempar.innerHTML='[&ndash;]'",count+1)
+}
+
+change.onclick=CHA=function(){try{
+	change.innerHTML='Pick from List: <br>'+('<a id=lslist>'+LSLIST.replace(/, /g,'</a><br><a id=lslist>')+'</a>')+'<br>'+C['cform']//LSLIST.replace(', null','').replace(/,/g,'<br>')
+	if(change.innerHTML.match(LSKEY)){//finds current LSKEY and pre-highlights it
+		change.innerHTML=(change.innerHTML.replace(RegExp('<a id="lslist">'+LSKEY+'</a>'),'<a id=lslist selected>'+LSKEY+'</a>'))
+	}
+	//'List: <br>'+LSLIST.replace(', null','').replace(/,/g,'<br>')+'<br>'+C['cform']
+	change.onclick=null
+	change.onmouseover=null
+	change.onmouseout=null
+	change.className='form'
+	//LSKEY=prompt('Enter New Paradigm', 'link')
+	LSCLICK=function(e){
+		LSKEY=e.target.innerHTML
+		localStorage['LSKEY']=LSKEY
+		if(!(localStorage['LSLIST'].match(LSKEY))){//less dynamic than I'd like, but still works
+			localStorage['LSLIST']+=', '+LSKEY
+		}
+		location.reload()
+	}
+	for(i in lslist){
+		lslist[i].onclick=LSCLICK
+	}
+	CKEY=function(){
+		LSKEY=cinp.value
+		localStorage['LSKEY']=LSKEY
+		if(!(localStorage['LSLIST'].match(LSKEY))){//less dynamic than I'd like, but still works
+			localStorage['LSLIST']+=', '+LSKEY
+		}
+		location.reload()
+	}
+	cinp.onkeydown=function(e){e.keyCode==13?CKEY():null}
+	}catch(e){
+		LSKEY=prompt('An error occurred. Good thing I thought of that ;D\n\nPlease enter the key via this box', 'link')
+		localStorage['LSKEY']=LSKEY
+		if(!(localStorage['LSLIST'].match(LSKEY))){//less dynamic than I'd like, but still works
+			localStorage['LSLIST']+=', '+LSKEY
+		}
+		location.reload()
+		return false
+	}
+}
+change.onmouseover=function(){
+	a=function(x){change.innerHTML=x}//animation function
+	af1=[//ANIMATION #1
+		'[C]',
+		'[CH]',
+		'[CHA]',
+		'[CHAN]',
+		'[CHANG]',
+		'[CHANGE]',
+		'[CHANGE ]',
+		'[CHANGE K]',
+		'[CHANGE KE]',
+		'[CHANGE KEY]',
+	]
+	af2=[//ANIMATION #2
+		'[GDHFTY DKF]',
+		'[AFHDSA IUF]',
+		'[FHDHQG EFD]',
+		'[AHKDSO HFD]',
+		'[HGLKSQ DFI]',
+		'[SHFKFP HDF]',
+		'[CDIIHA GFF]',//first letter appears here
+		'[CHVSSM DFA]',
+		'[CHAHDN SES]',
+		'[CHANEW RYW]',
+		'[CHANGY REY]',
+		'[CHANGE TEW]',
+		'[CHANGE KTR]',
+		'[CHANGE KEP]',
+		'[CHANGE KEY]',
+	]
+	af3=[//ANIMATION #3
+		'CHAN',
+		'CHANGE',
+		'CHANGE KEY',
+	]
+	af4=[//ANIMATION #4
+		'1010101010101010001001',
+		'1010100101010010101010',
+		'0011010101001010010010',
+		'1101010101010010001001',
+		'0010101010010101001010',
+		'1010101010101001101001',
+		'1010101010010001010010',
+		'0100101101010100101010',
+		'1100100100101000',
+		'110010100101',
+		'CHANGE KEY',
+	]
+	//af=af1
+	af=eval(localStorage['af'])
+	count=0
+	speed=25
+	for(i in af){
+		count+=speed
+		setTimeout('a("'+af[i]+'")',count)
+	}
+}
+change.onmouseout=function(){
+	setTimeout("change.innerHTML='[~]'",count+1)
+	//the genius in this is that it is always just a smidge longer than the animation
+	//So it can't be glitched
+}
+
+
+add.onclick=ADD=function(){
+	add.innerHTML=C.form//change to form
+	add.onclick=null
+	add.onmouseover=null
+	add.onmouseout=null//disable mouse functions
+	
+	Enter=function(){
+		Links++
+		data='<a href="'+inp.value+'">'+inp2.value+'</a> [<a href="javascript:EDIT('+Links+')">edit</a>] [<a href="javascript:REMOVE('+Links+')">remove</a>]'
+		LS(LSKEY+'.'+Links,data)
+		LS(LSKEY+'s',Links)
+		location.reload()
+	}
+	function submit(e){
+		e.keyCode==13?Enter():null
+	}
+	inp.onkeydown=submit
+	inp2.onkeydown=submit
+	sub.onclick=Enter
+	can.onclick=function(){location.reload()}
+	add.className='form'
+}
+add.onmouseover=function(){
+	a=function(x){add.innerHTML=x}//animation function
+	af1=[//animation frames
+		'[A]',
+		'[AD]',
+		'[ADD]',
+		'[ADD N]',
+		'[ADD NE]',
+		'[ADD NEW]',
+		'[ADD NEW ]',
+		'[ADD NEW L]',
+		'[ADD NEW LI]',
+		'[ADD NEW LIN]',
+		'[ADD NEW LINK]',
+	]
+	af2=[//ANIMATION #2
+		'[AZC ETV TG61]',
+		'[BQR FGS HGF7]',
+		'[KJS D45 IUSD]',
+		'[JHS TWE DUGF]',
+		'[IUT ESR SKLJ]',
+		'[FOG SLJ DAKF]',
+		'[APC ETV TG61]',
+		'[ADO QGS HGF7]',
+		'[ADD T45 IUSD]',
+		'[ADD NPE DUGF]',
+		'[ADD NEQ SKLJ]',
+		'[ADD NEW LAKF]',
+		'[ADD NEW LIAJ]',
+		'[ADD NEW LINO]',
+		'[ADD NEW LINK]',
+	]
+	af3=[//ANIMATION #3
+		'ADD',
+		'ADD NEW',
+		'ADD NEW LINK',
+	]
+	af4=[//ANIMATION #4
+		'1010101010101010001001',
+		'1010100101010010101010',
+		'0011010101001010010010',
+		'1101010101010010001001',
+		'0010101010010101001010',
+		'1010101010101001101001',
+		'1010101010010001010010',
+		'0100101101010100101010',
+		'1100100100101000',
+		'11001010010101',
+		'ADD NEW LINK',
+	]
+	//af=af1
+	af=eval(localStorage['af'])
+	count=0
+	speed=25
+	for(i in af){
+		count+=speed
+		setTimeout('a("'+af[i]+'")',count)
+	}
+}
+add.onmouseout=function(){
+	setTimeout("add.innerHTML='[+]'",count+1)
+}
+
+onload=function(){
+	LS=function(KEY,VAL){//get or set localstorage item
+		action=(VAL?'set':'get')
+		if(action=='get'){
+			return localStorage[KEY]
+		}else{
+			localStorage[KEY]=VAL
+			return VAL.toString()//for better console feedback; serves no purpose in User Interface
+		}
+	}
+	_GET=function(key,def){
+		try{
+			return RegExp('[?&]'+key+'=([^?&]*)').exec(location.href)[1].replace(/%20/g,'')
+		}catch(e){
+			return def?def:''
+		}
+	}
+	EDIT=function(KEY,removed){//KEY = key, removed = whether the link was created by the remove function
+		var optout=confirm('Sure you want to '+(removed?'restore?':'edit?'))
+		if(!optout){
+			return false
+		}
+		if(!removed){//edit link
+			var ELINK=prompt('Enter new url',/href="([^"]*)"/.exec(localStorage[LSKEY+'.'+KEY])[1])
+			var ENAME=prompt('Enter new name',/\>([^\<]*)/.exec(localStorage[LSKEY+'.'+KEY])[1])
+		}else{//restore link
+			var ELINK=prompt('Enter new url','http://i-was-too-lazy-to-add-a-url.com')
+			var ENAME=prompt('Enter new name','RESTORED AND UNNAMED')
+		}
+		localStorage[LSKEY+'.'+KEY]='<a href="'+ELINK+'">'+ENAME+'</a> [<a href="javascript:EDIT('+KEY+')">edit</a>] [<a href="javascript:REMOVE('+KEY+')">remove</a>]'
+		location.reload()
+	}
+	REMOVE=function(KEY){
+		var ENAME=/\>([^\<]*)/.exec(localStorage[LSKEY+'.'+KEY])[1]
+		var optout=confirm('Are you sure you want to DELETE the selection "'+ENAME+'"?')
+		if(!optout){
+			return false
+		}else{
+			var optout2=confirm('Really Sure? (You CANT get this back)')//double optout
+			if(!optout2){
+				return false
+			}
+		}
+		localStorage[LSKEY+'.'+KEY]='<i>REMOVED</i>  [<a href="javascript:EDIT('+KEY+',true)">restore</a>]'
+		location.reload()
+	}
+	SUBLINK=function(n){//Subtract link
+		LS(LSKEY+'s', (parseInt(LS(LSKEY+'s'))-(n?n:1)))
+		location.reload()
+	}
+	ADDLINK=function(n){//Add link
+		LS(LSKEY+'s', (parseInt(LS(LSKEY+'s'))+(n?n:1)))
+		location.reload()
+	}
+	REMPAR=function(){//Remove Paradigm
+		try{
+			//var KEY=prompt('Which paradigm do you want to remove?', '')
+			var KEY=LSKEY
+			if(!LS(LSKEY+'.'+1)){//check for data in that paradigm
+				var conf=confirm('You have selected '+LSKEY+'.\n\nDo you want to continue?')
+				if(!conf){return false}
+				var toRemove=RegExp('(, )?('+KEY+')','g').exec(LS('LSLIST'))[0]
+				LS('LSLIST',LS('LSLIST').replace(toRemove,''))
+			}else{
+				alert('There is data in '+LSKEY+'.\n\nThe process can not be continued until you follow the clearing instructions that are given when you when you click the [-] button.')
+			}
+		}catch(e){
+			alert('Failed to remove. Make sure you referenced a paradigm that is in the list.\n\nEither way, it was not found in the list, it was likely a glitch')
+		}
+		location.reload()
+	}
+	CHANIM=function(to){//CHANGE ANIMATION
+		if(to){
+			LS('af','af'+to)
+		}else{
+			LS('af',(
+					LS('af')=='af1'?'af2':
+					LS('af')=='af2'?'af3':
+					LS('af')=='af3'?'af4':
+					'af1'
+				)
+			)
+		}
+	}
+	SWAPLINKS=function(){
+		alert('please click the number to the left of one of the two links you want to swap')
+		
+		onclick=function(e){
+			if(isNaN(parseInt(e.target.innerHTML))){alert('not a number');onclick=null;return false}
+			id1=RegExp('0?([0-9]+)').exec(e.target.innerHTML)[1]//without the RegExp, it would pick up "01" or "04" for numbers under 10 and would cause errors as there is no key LSKEY.01
+			link1=LS(LSKEY+'.'+id1)
+			if(!link1){alert('value is undefined, attempting to copy that will generate an error >:(');onclick=null;return false}
+			href1=RegExp('href="([^"]*)"').exec(link1)[1]
+			title1=RegExp('>([^<]*)</a>').exec(link1)[1]
+			alert('You have chosen link #'+id1+' Click the number of the next link you want to swap')
+			
+			onclick=function(e){
+				if(isNaN(parseInt(e.target.innerHTML))){alert('not a number');onclick=null;return false}
+				id2=RegExp('0?([0-9]+)').exec(e.target.innerHTML)[1]
+				link2=LS(LSKEY+'.'+id2)
+				if(!link2){alert('value is undefined, attempting to copy that will generate an error >:(');onclick=null;return false}
+				if(id1==id2){alert('can\'t swap the same number!');onclick=null;return false}
+				href2=RegExp('href="([^"]*)"').exec(link2)[1]
+				title2=RegExp('>([^<]*)</a>').exec(link2)[1]
+				onclick=null
+				//alert('data:\n'+'\nid 1: '+id1+'\nlink 1: '+link1+'\nhref 1: '+href1+'\ntitle 1: '+title1+'\nid 2: '+id2+'\nlink 2: '+link2+'\nhref 2: '+href2+'\ntitle 2:'+title2)
+				var conf=confirm('You have chosen to swap link #'+id1+' ('+title1+') with link #'+id2+' ('+title2+'). Is this correct?')
+				if(!conf){
+					return false
+				}
+				if(link1.match(/<i>REMOVED<\/i>/)){
+					localStorage[LSKEY+'.'+id1]='<a href="'+href2+'">'+title2+'</a> [<a href="javascript:EDIT('+id1+')">edit</a>] [<a href="javascript:REMOVE('+id1+')">remove</a>]'
+					localStorage[LSKEY+'.'+id2]='<i>REMOVED</i> [<a href="javascript:EDIT('+id2+',true)">restore</a>]'
+				}else if(link2.match(/<i>REMOVED<\/i>/)){
+					localStorage[LSKEY+'.'+id1]='<i>REMOVED</i> [<a href="javascript:EDIT('+id1+',true)">restore</a>]'
+					localStorage[LSKEY+'.'+id2]='<a href="'+href1+'">'+title1+'</a> [<a href="javascript:EDIT('+id2+')">edit</a>] [<a href="javascript:REMOVE('+id2+')">remove</a>]'
+				}else{
+					localStorage[LSKEY+'.'+id1]='<a href="'+href2+'">'+title2+'</a> [<a href="javascript:EDIT('+id1+')">edit</a>] [<a href="javascript:REMOVE('+id1+')">remove</a>]'
+					localStorage[LSKEY+'.'+id2]='<a href="'+href1+'">'+title1+'</a> [<a href="javascript:EDIT('+id2+')">edit</a>] [<a href="javascript:REMOVE('+id2+')">remove</a>]'
+				}
+				location.reload()
+			}
+		}
+	}
+	EXTRA=function(){
+		LS('ex',(
+			LS('ex')=='true'?'false':
+			'true'
+			)
+		)
+		location.reload()
+	}
+	if(LS('ex')=='false' || !LS('ex')){
+		for(i in ex){
+			ex[i].innerHTML=''
+		}
+	}
+	if(!LS('link.1') && LSKEY=='link' && LSLIST=='link, fave'){//intro message
+		div.innerHTML=(
+			'<p link style="padding:10px;">This is either <br>'+
+				'1) your first time here (which includes hitting clear), or <br>'+
+				'2) you are using a different browser and your links aren\'t showing up.<br><br>'+
+			'If this is your first time here, click the [+] button on the top of the page<br><br>'+
+			'Don\'t panic; your links aren\'t gone.<br>'+
+				'Try going back to the other browser, and your links should be there.<br><br>'+
+			'Keep in mind that every browser uses a different folder for storage ;)</p>'
+		)
+	}
+	if(_GET('ref')){//IE message when you follow the instructions
+		if(_GET('ref')=='error'){
+			alert(
+				'IT WORKED!\n'+
+				'I see you got here from the troubleshoot page after trying to run this on IE\n\n'+
+				'You have successfully followed the instructions to get this working. Congratulations!\n\n'+
+				'Enjoy your fully working (albeit ugly) link saver app!\n\n'+
+				'Yeah, weird thing aboug IE: It needs to run on a server to use storage\n\n\n'+
+				'Get the latest version of Google Chrome, Opera, Maxthon, Safari, or any other webkit/gecko based browser to fully enjoy this app!'
+			)
+			location.href=location.href.split('?')[0]
+		}
+	}
+	/***********************************************************************************************
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+	***********************************************************************************************/
+	
+	Links=LS(LSKEY+'s')?LS(LSKEY+'s'):0//tracker variable to make the onload write work
+	breaker='<hr>'
+	//breaker='<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>.<hr>'
+	for(i=0;i<LS(LSKEY+'s');i++){
+		div.innerHTML=breaker+'<p link><small>'+(((i+1)<10?'0':'')+(i+1))+'</small>) '+(LS(LSKEY+'.'+(i+1)))+'</p>'+div.innerHTML
+	}
+	div.innerHTML=div.innerHTML.replace(breaker,'').replace(/a href=/g,'a target=_BLANK href=')//replace first break (at the top)
+	/***********************************************************************************************
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+		ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE	ONLOAD WRITE
+	***********************************************************************************************/
+	clr.onclick=function(e){
+		var optout=confirm('This is a dangerous button you just clicked. Only proceed if you are ABSOLUTELY SURE you want to delete every single link space and start fresh')
+		if(!optout){return false}else{
+			var optout2=confirm('Are you sure? This is everything that\'s getting deleted. You should consider backing up any important links.')
+			if(!optout2){
+				return false
+			}
+		}
+		for(i=0;i<LS(LSKEY+'s');i++){
+			localStorage.removeItem(LSKEY+'.'+(i+1))
+		}
+		localStorage.removeItem(LSKEY+'s')
+		location.reload()
+	}
+	try{
+		clrall.onclick=function(e){
+			var optout=confirm('This button is awkward and difficult to click for a reason.\n\nThis will delete every damn thing on this page. Every Paradigm; every link. Only proceed if you are SURE you want to commit data genocide.')
+			if(!optout){
+				return false
+			}else{
+				var optout2=confirm('Are you SURE? Make sure to hit the clear button in every paradigm before you continue; otherwise, there will be junk data festering, catching unknown diseases and dust. You don\'t wanna put your computer through that :/')
+				if(!optout2){
+					return false
+				}else{
+					var optout3=confirm('I\'m not playing around here. This WILL delete EVERYTHING. Last chance to turn back')
+					if(!optout3){
+						return false
+					}
+				}
+			}
+			alert('Okay then. Deleting EVERYTHING')
+			for(i=0;i<LS(LSKEY+'s');i++){
+				localStorage.removeItem(LSKEY+'.'+(i+1))
+			}
+			localStorage.removeItem(LSKEY+'s')
+			localStorage.removeItem('LSKEY')
+			localStorage.removeItem('LSLIST')
+			location.reload()
+		}
+	}catch(e){/*No Clrall button*/}
+	document.title=LSKEY+' saver'
+}
+//dynamically allows for infinite links under a LocalStorageKey.x paradigm
+map={}
+onkeydown=onkeyup=function(e){
+	map[e.keyCode]=e.type=='keydown'?true:false
+	if(map[17]&&map[16]&&map[65]){//CTRL+SHIFT+A
+		ADD()
+		map={}
+		return false
+	}else if(map[17]&&map[16]&&map[67]){//CTRL+SHIFT+C
+		CHA()
+		map={}
+		return false
+	}else if(map[17]&&map[16]&&map[82]){//CTRL+SHIFT+R
+		REM()
+		map={}
+		return false
+	}else if(map[16]&&map[83]){//SHIFT+S
+		SWAPLINKS()
+		map={}
+		return false
+	}else if(map[16]&&map[88]){//SHIFT+X
+		EXTRA()
+		map={}
+		return false
+	}else if(map[16]&&map[67]){//SHIFT+C
+		CHANIM()
+		map={}
+		return false
+	}else if(map[16]&&map[187]){//SHIFT++
+		ADDLINK()
+		map={}
+		return false
+	}else if(map[16]&&map[189]){//SHIFT+-
+		SUBLINK()
+		map={}
+		return false
+	}
+}
+}catch(e){
+	document.body.style.background='#aaa'
+	document.body.innerHTML=(
+		'<div style="background:#ddd; padding:10px"><big><h1>AN ERROR HAS OCCURRED</h1></big><br><br>'+
+		'Reloading the page might fix the problem.<br><br>'+
+		'If it persists, please make sure you are using a browser that..well..doesn\'t suck '+
+		'(Internet Explorer, AOL\'s browser, or most versions of Netscape Navigator are examples of sucky browsers)'+
+		' I suggest getting the latest version of Google Chrome, Mathon 3, Safari, or Firefox. Webkit and Gecko Browsers are tested and proven to work. '+
+		'For a list of browsers this should work on, go'+
+		' <a style="color:blue" href="http://www.quirksmode.org/blog/archives/2010/12/list_of_webkitb.html">here</a>.<br><br>'+
+		'I\'m not trolling you, look at the script, the entire thing is wrapped in a try..catch statement that brought you here.<br><hr style="height:5px">'+
+		'There is <i>one</i> way you can run this on IE (I assume you are running IE on Windows):<br>'+
+		'1) Download and Install XAMPP (<a href="http://google.com/search?q=Get+XAMPP">Google, bro</a>)<br>'+
+		'2) Go into C:\\Xampp and open apache_start.bat OR xampp-control.exe (has this icon: <img src="http://a0.twimg.com/profile_images/69932196/xampp-logo-rgb.jpg" width=25px>), then click the start button on apache<br>'+
+		'3) Drag this html into C:\\Xampp\\htdocs<br>'+
+		'4) assuming everything was done right, and you didn\'t change '+
+		'the name of this file from "link engine.html", click <a href="http://localhost/link%20engine.html?ref=error">here</a> and presto</div>'
+	)
+}
+</script>
+<style>
+
+body{
+	background:#333;
+	font:16px arial black;
+}
+
+#wrap{
+	width:700px;
+	background:#ddd;
+	box-shadow:#000 3px 3px 2px;
+	margin:20px auto;
+	padding:10px;
+}
+
+#div{
+	max-height:400px;
+	overflow-y:auto;
+	padding:5px;
+}
+
+.inp,#clr{
+	-webkit-transition:.25s;
+	-moz-transition:.25s;
+}
+.inp{
+	width:150px;
+	background:#ddd;
+	border-top:2px solid #ddd;
+	border-bottom:2px solid #333;
+	border-left:2px solid #ddd;
+	border-right:2px solid #ddd;
+}
+.inp:hover{
+	-webkit-transform:scale(1.1);
+	-moz-transform:scale(1.1);
+	background:#eee;
+	border:2px solid black;
+}
+#clr, #sub, #can, #clrall{
+	width:80px;
+	height:30px;
+	font:16px arial black;
+	color:#333;
+	background:-webkit-linear-gradient(top, #ddd, #aaa);
+	background:-moz-linear-gradient(top, #ddd, #aaa);
+	cursor:hand;
+}
+#clr{
+	-webkit-transition:-webkit-transform .25s;
+	-moz-transition:-moz-transform .25s;
+}
+#clrall{
+	width:160px;
+	background:-webkit-linear-gradient(top, #d55, #a55);
+	background:-moz-linear-gradient(top, #d55, #a55);
+	color:white;
+	-webkit-transition:-webkit-transform .25s;
+	-moz-transition:-moz-transform .25s;
+}
+#clrall:hover{
+	-webkit-transform:scale(.02) rotate(145deg);
+	-moz-transform:scale(.02) rotate(145deg);
+}
+#can{
+	width:85px;
+	-webkit-transition:.25s;
+	-moz-transition:.25s;
+}
+#clr:hover, #sub:hover, #can:hover{
+	-webkit-transform:scale(1.2);
+	-moz-transform:scale(1.2);
+}
+#sub{
+	margin:10px 0px 0px -10px;
+	-webkit-transition:.25s;
+	-moz-transition:.25s;
+}
+
+#hr{
+	height:5px;
+	background:#aaa;
+}
+
+a[href]{
+	color:#22f;
+	text-decoration:none;
+}
+a[href]:hover{
+	color:#0ce;
+}
+a#lslist{
+	background:transparent;
+	cursor:hand;
+}
+a#lslist:hover{
+	color:#0ce;
+}
+a#lslist:hover:before{
+	content:'>';
+	color:black;
+}
+a#lslist[selected]{
+	color:#00c;
+}
+a#lslist[selected]:before{
+	content:'>';
+	color:#000;
+}
+a[href=""]{
+	color:#000;
+}
+p[link]{
+	margin: -5px 0px;
+	cursor:hand;
+	
+	max-width:700px;
+	white-space:nowrap;
+	overflow-x:auto;
+}
+p[link]:hover{
+	background:#eee;
+}
+small{
+	font-size:12px;
+}
+div[topbutton]{
+	background:#ddd;
+	display:inline-block;
+	padding:5px 10px;
+	cursor:hand;
+}
+div[topbutton]:hover{
+	-webkit-transition:.5s;
+	-moz-transition:.5s;
+	background:#eee;
+}
+#add.form{
+	display:block;
+	cursor:default;
+}
+#change.form, #rempar.form{
+	cursor:default;
+}
+#add.form:hover,#change.form:hover,#rempar.form:hover{
+	background:#ddd;
+}
+a[href]:hover:after{
+	content:attr(after);
+}
+
+/*Scrollbar for div*/
+
+#div::-webkit-scrollbar {
+	width:10px;
+	height:10px;
+}
+p[link]::-webkit-scrollbar{
+	width:7px;
+	height:7px;
+}
+
+#div::-webkit-scrollbar-thumb,
+p[link]::-webkit-scrollbar-thumb{
+	background: none;
+	cursor:hand;
+}
+#div:hover::-webkit-scrollbar-thumb,
+p[link]:hover::-webkit-scrollbar-thumb{
+	background:#999;
+	border:1px #555;
+}
+/*/
+
+</style>

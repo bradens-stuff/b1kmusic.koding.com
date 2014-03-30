@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<link rel="icon" 
+    type="image/png"
+	href="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Notepad_icon.svg/500px-Notepad_icon.svg.png">
+
+<style>
+*{
+	margin:0;
+	padding:0;
+}
+html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    background:#333;
+}
+textarea{
+	max-width:99%;
+    min-width:99%;
+	max-height:98%;
+    min-height:98%;
+    border:none;
+	background:#333;
+	color:#fff;
+    margin:0;
+    padding:10px 0 0 10px;
+	font:12px monospace;
+}
+div#FRAME{
+	padding:0;
+	background:#ccc;
+	width:100%;
+	height:100%;
+	position:fixed;
+	left:0px;
+	top:0px;
+	display:none;
+}
+iframe{
+	background:#eee;
+	color:#333;
+	width:100%;
+	height:90%;
+}
+a[href]{
+	color:#00f;
+	text-decoration:none;
+}
+a[href]:hover{
+	color:#0ce;
+}
+div[TABS]{
+	position:fixed;
+	right:12px;
+	top:2px;
+	max-width:800px;
+	white-space:nowrap;
+	overflow:auto;
+	padding:5px;
+}
+a[tab]{
+
+	background:#ccc;
+	padding:5px 10px;
+	display:inline-block;
+	border:2px solid #222;
+}
+a[tab]:hover, a[tab][selected=true]{
+	background:#eee;
+}
+a[tab][selected=true]{
+	position:relative;
+	top:-2px;
+}
+</style>
+
+<textarea></textarea>
+<div TABS id=TABS></div>
+<div TABS id=ADDREM>
+	<a tab href="javascript:remTab()">&ndash;</a> 
+	<a tab href="javascript:addTab()">+</a>
+</div>
+<div id=FRAME></div>
+<script>
+((function(){
+	$$=function(){return document.querySelectorAll.apply(document,arguments)};
+	args=arguments;
+	SKey=args[0];
+	if(localStorage[SKey]){
+		Storage=JSON.parse(localStorage[SKey])
+	}else{
+		Storage=args[1]
+	}
+	Save=function(){
+		Storage['Last Save']=((new Date()).toString())
+		localStorage[SKey]=JSON.stringify(Storage);
+		if(args[2]){
+			args[2]()
+		}
+	}
+	console.log('initialization successful')
+})(
+
+'Textbox',
+{
+	Tabs:{
+		current:1,
+		list:[1,2,3]
+	},
+	1:{
+		Text:'Tab 1$n$nType your Notes Here.$n$nThe first line is the title$n$nPress CTRL+SHIFT+B for Backup and restore options',
+		Scroll:0
+	},
+	2:{
+		Text:'Tab 2$n$nType your Notes Here.$n$nThe first line is the title$n$nPress CTRL+SHIFT+B for Backup and restore options',
+		Scroll:0
+	},
+	3:{
+		Text:'Tab 3$n$nType your Notes Here.$n$nThe first line is the title$n$nPress CTRL+SHIFT+B for Backup and restore options',
+		Scroll:0
+	}
+},
+function(){
+	
+}
+
+))
+
+addTab=function(){
+	l=Storage['Tabs']['list'].length
+	Storage['Tabs']['list'][l]=(l+1)
+	Storage['Tabs']['current']=(l+1)
+	Storage[l+1]={Text:'Tab '+(l+1)+'$n$nType your Notes Here.$n$nThe first line is the title$n$nPress CTRL+SHIFT+B for Backup and restore options',Scroll:0}
+	Save()
+	location.reload()
+}
+remTab=function(){
+	l=Storage['Tabs']['list'].length-1
+	//delete Storage['Tabs']['list'][l]
+	/*
+		I had to do it the "deletion by exclusion" way because
+		Some silly ass glitch where using delete on an array index
+		was pushing null to the end, and treating that as part of the array
+	*/
+		arr=Storage['Tabs']['list']
+		arr2=[]
+		for(i in arr){
+			if(i!=l){
+				arr2[i]=arr[i]
+			}
+		}
+		Storage['Tabs']['list']=[]
+		for(i in arr2){
+			Storage['Tabs']['list'][i]=arr2[i]
+		}
+	Storage['Tabs']['current']=1
+	delete Storage[l+1]
+	Save()
+	location.reload()
+}
+changeTab=function(tab){
+	Storage['Tabs']['current']=tab
+	Save()
+	location.reload()
+}
+j=0
+for(i in Storage['Tabs']['list']){
+	tab=Storage['Tabs']['list'][i]
+	cur=Storage['Tabs']['current']
+	j++
+	try{
+		TText=Storage[j]?RegExp('([^$]*)').exec(Storage[j].Text)[0]:''
+	}catch(e){
+		TText=e
+	}
+	TABS.innerHTML+='<a title="'+(TText)+'" selected='+(tab==cur?true:false)+' tab href="javascript:changeTab('+tab+')">'+tab+'</a> '
+}
+setInterval(function(){TABS.style.right=ADDREM.offsetWidth+10},100)
+
+txt=$$('textarea')[0]
+Tab=Storage['Tabs']['current']
+txt.value=Storage[Tab]['Text'].replace(/\$n/g,'\n')
+txt.scrollTop=Storage[Tab]['Scroll']
+document.title=RegExp('(.*)\n?').exec(txt.value)[1]
+
+txt.onkeyup=txt.onscroll=function(){
+	Storage[Tab]['Text']=txt.value.replace(/\n/g,'$n')
+	Storage[Tab]['Scroll']=txt.scrollTop
+	document.title=RegExp('(.*)\n?').exec(txt.value)[1]
+	Save()
+}
+map={};setInterval(function(){map={}},1000);
+onkeyup=onkeydown=function(e){
+	map[e.keyCode]=e.type=='keydown'?true:false
+	if(map[17]&&map[16]&&map[66]){//CTRL+SHIFT+B
+		e.preventDefault()
+		BACKUPANDRESTORE()
+		map={}
+		return false
+	}
+}
+BACKUPANDRESTORE=function(){
+	FRAME.innerHTML='<iframe name="frame"></iframe><br>[<a href="javascript:FRAME.style.display=\'none\';void(0)">Close</a>] [<a href="javascript:localStorage.removeItem(SKey);location.reload();void(0)">Delete</a>]'
+	FRAME.style.display='block'
+	$$$=function(){return frames['frame'].document.querySelectorAll.apply(frames['frame'].document,arguments)}
+	frames['frame'].document.body.innerHTML=(
+		'<textarea placeholder="Paste Data here and press Enter to Restore"></textarea>'+
+		'<style>'+
+		'*{margin:0;padding:0;}'+
+		'body{background:#555;color:#fff;}'+
+		'textarea{background:#eee;color:#333;width:100%;height:100%}'+
+		'</style>'
+	)
+	txt=$$$('textarea')[0]
+	if(localStorage[SKey]){
+		txt.value=JSON.stringify(Storage)
+	}
+	txt.onkeydown=function(e){
+		if(e.keyCode==13){
+			localStorage[SKey]=txt.value
+			location.reload()
+		}
+	}
+}
+</script>

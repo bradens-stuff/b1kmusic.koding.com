@@ -1,0 +1,94 @@
+<link id="favicon" rel="icon" type="image/png"/>
+<body></body>
+<script>
+//http://codesocialist.com/#/?s=cr is where I initially experimented with this analog clock.
+canvas = document.createElement('canvas');
+canvas.width = 16;
+canvas.height = 16;
+document.body.appendChild(canvas);
+var ctx = canvas.getContext('2d'), rot = Math.PI*1.5, radius = 300;
+var W = canvas.width, H = canvas.height;
+Hand = function(x,y,r,p,c,tu,h){
+    this.x = x+.5;
+    this.y = y+.5;
+    this.radius = r;//radius
+    this.positions = p;//amount of positions
+    this.col = c;//color
+    this.tUnit = tu;//time unit
+    this.rot = new Date()[this.tUnit]()*Math.PI/this.positions*2;
+    this.hours = h||false;
+    this.run = function(){
+        if(this.hours){
+            this.rot = new Date().getHours()%12*Math.PI/this.positions*2;
+        }else{
+            this.rot = new Date()[this.tUnit]()*Math.PI/this.positions*2;
+        }
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'round';
+        ctx.moveTo(this.x,this.y);
+        ctx.lineTo(
+            this.x+Math.cos(this.rot+Math.PI*1.5)*this.radius,
+            this.y+Math.sin(this.rot+Math.PI*1.5)*this.radius
+        );
+        ctx.strokeStyle = this.col;
+        ctx.stroke();
+        ctx.closePath();
+        
+        bctx.beginPath();
+        bctx.lineWidth = 5;
+        bctx.lineCap = 'round';
+        bctx.moveTo(bW/2,bH/2);
+        bctx.lineTo(
+            bW/2+Math.cos(this.rot+Math.PI*1.5)*this.radius*12,
+            bH/2+Math.sin(this.rot+Math.PI*1.5)*this.radius*12
+        );
+        bctx.strokeStyle = this.col;
+        bctx.stroke();
+        bctx.closePath();
+    };
+};
+secondHand = new Hand(W/2,H/2,W/2,60,'#00f','getSeconds');
+minuteHand = new Hand(W/2,H/2,W/2,60,'#f00','getMinutes');
+hourHand = new Hand(W/2,H/2,W/3,12,'#000','getHours',true);
+
+bigCanvas = document.createElement('canvas');
+bigCanvas.width = bW = 16*20;
+bigCanvas.height = bH = 16*20;
+document.body.appendChild(document.createElement('br'));
+document.body.appendChild(bigCanvas);
+bctx = bigCanvas.getContext('2d');
+
+(function loop(){
+    ctx.clearRect(0,0,W,H);
+    bctx.clearRect(0,0,bW,bH);
+    //Update Hands
+    secondHand.run();
+    minuteHand.run();
+    hourHand.run();
+    //Draw frame
+    ctx.beginPath();
+    ctx.arc(W/2,H/2,W/2,Math.PI*2,false);
+    ctx.stroke();
+    ctx.closePath();
+    //bigCanvas frame
+    bctx.beginPath();
+    bctx.arc(bW/2,bH/2,bW/2-10,Math.PI*2,false);
+    bctx.stroke();
+    bctx.closePath();
+    //(bigCanvas only) draw numbers
+    bctx.font = 'bold 20px monospace';
+    bctx.textAlign = 'center';
+    bctx.textBasline = 'Middle';
+    for(var t = 1; t <=12; t++){
+        bctx.fillText(t, bW/2+Math.cos(t*Math.PI/6+Math.PI*1.5)*120, bH/2+Math.sin(t*Math.PI/6+Math.PI*1.5)*120);
+    }
+    //Logic: line from X,Y, to X+Math.cos(rotation)*radius, Y+Math.sin(rotation)*radius
+    //Top point of circle = Math.PI*1.5
+    //So Math.PI*1.5+ (notch*Math.PI/(amount of notches/2)) returns correct rotation
+    //The same applies to writing text in the right place, but of cours, it is aligned at the edge, so I set the align and baseline to center
+    icon = canvas.toDataURL();
+    favicon.href = icon;
+    setTimeout(loop,1000);
+})();
+</script>

@@ -1,0 +1,594 @@
+<div wrap id=wrapper>
+    <div id=toprow><div id=addform title="[CTRL+SHIFT+A] Add New Link" topbutton>[+]</div><div id="chaform" title="[CTRL+SHIFT+C] Change link paradigm" topbutton>[~]</div><div id="remform" title="[CTRL+SHIFT+R] Remove link Paradigm" topbutton>[&ndash;]</div></div><hr b>
+	<div id=div></div><hr b>
+	<div id=botrow><input clr type=button value="Clear" onclick="javascript:CLEAR()"><div bottomlinks id=botlinks>[<a href="javascript:ADDLINK()" title="[SHIFT++] Unhide last link">+</a>] [<a href="javascript:SUBLINK()" title="[SHIFT+-] Hide last link">&ndash;</a>] [<a href="javascript:SWAPLINKS()" title="[CTRL+SHIFT+S] Swap Two Links. You can also drag them">S</a>]</div></div>
+    <p>Warning: This is an <B>OLD VERSION</B> of the Link Saver. For the latest version, click <a href="http://b1kmusic.koding.com/Misc/WebApps/Link_Saver_110/">here</a></p>
+</div>
+<script>
+RCOLFLAG=0//put ?RCFLAG=true at the end of the url to enable Random background
+g={};try{for(i in location.search.split('&')){reg=RegExp('([^?&]*)=([^?&]*)').exec(location.search.split('&')[i]);g[reg[1]]=reg[2]}}catch(e){}//The get object build crammed into one line
+if(g['RCFLAG']=='true'){RCOLFLAG=1}
+//LS VARS USED:
+/*
+
+1)	X: Object: {
+		link.0:{
+			link:[link],
+			title:[title],
+			removed[true/false]:
+		},
+		...
+	}
+2)	LSPAR: Object: {
+		key:[key], (this controls X)
+		list:{
+			[listitem]:[listitem],
+			...
+		}
+	}
+*/
+document.title='Link Saver'
+LSKEY='link'//this is used IN the X Objects
+if(localStorage['LSPAR']){
+	LSPAR=JSON.parse(localStorage['LSPAR'])
+}else{
+	LSPAR={key:'Link',list:{'Link':'Link'}}
+}
+if(localStorage[LSPAR.key]){
+	Links=JSON.parse(localStorage[LSPAR.key])
+}else{
+	Links={}
+}
+
+onload=function(){
+	addform.onmouseover=function(){
+		a=function(an){addform.innerHTML=an}
+		af=[
+			'['+genC(3)+' '+genC(4)+']',
+			'['+genC(3)+' '+genC(4)+']',
+			'['+genC(3)+' '+genC(4)+']',
+			'['+genC(3)+' '+genC(4)+']',
+			'['+genC(3)+' '+genC(4)+']',
+			'[A'+genC(2)+' '+genC(4)+']',
+			'[AD'+genC(1)+' '+genC(4)+']',
+			'[ADD '+genC(4)+']',
+			'[ADD L'+genC(3)+']',
+			'[ADD LI'+genC(2)+']',
+			'[ADD LIN'+genC(1)+']',
+			'[ADD LINK]',
+		]
+		t=0
+		s=25
+		for(i in af){
+			t+=s
+			setTimeout('a("'+af[i]+'")',t)
+		}
+	}
+	addform.onmouseout=function(){
+		setTimeout('addform.innerHTML=\'[+]\'',t+1)
+	}
+	addform.onclick=ADD=function(){
+		addform.onclick=null
+		addform.onmouseover=null
+		addform.onmouseout=null
+		addform.innerHTML=''
+		chaform.onclick=null
+		chaform.onmouseover=null
+		chaform.onmouseout=null
+		chaform.innerHTML=''
+		remform.onclick=null
+		remform.onmouseover=null
+		remform.onmouseout=null
+		remform.innerHTML=''
+		addform.innerHTML='<div wrap form>Link <input i id=ilink><br>Title <input i id=ititle><hr>Add a new link by filling in the two fields and pressing Enter</div>'
+		imap={}//keymap for the i element
+		ititle.onkeydown=ititle.onkeyup=ilink.onkeydown=ilink.onkeyup=function(e){
+			imap[e.keyCode]=e.type=='keydown'?true:false
+			if(imap[13]){//ENTER
+				try{
+					Links[LSKEY+'.'+links]={link:ilink.value,title:ititle.value,removed:false}
+					Links[LSKEY+'s']=parseInt(links)+1
+					localStorage[LSPAR.key]=JSON.stringify(Links)
+					location.reload()
+				}catch(e){
+					alert('An Error ocurred.')
+					location.reload()
+				}
+			}
+		}
+	}
+	chaform.onmouseover=function(){
+		a=function(an){chaform.innerHTML=an}
+		af=[
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'[C'+genC(5)+' '+genC(3)+']',
+			'[CH'+genC(4)+' '+genC(3)+']',
+			'[CHA'+genC(3)+' '+genC(3)+']',
+			'[CHAN'+genC(2)+' '+genC(3)+']',
+			'[CHANG'+genC(1)+' '+genC(3)+']',
+			'[CHANGE '+genC(3)+']',
+			'[CHANGE K'+genC(2)+']',
+			'[CHANGE KE'+genC(1)+']',
+			'[CHANGE KEY]',
+		]
+		t=0
+		s=25
+		for(i in af){
+			t+=s
+			setTimeout('a("'+af[i]+'")',t)
+		}
+	}
+	chaform.onmouseout=function(){
+		setTimeout('chaform.innerHTML=\'[~]\'',t+1)
+	}
+	chaform.onclick=CHA=function(){
+		addform.onclick=null
+		addform.onmouseover=null
+		addform.onmouseout=null
+		addform.innerHTML=''
+		chaform.onclick=null
+		chaform.onmouseover=null
+		chaform.onmouseout=null
+		chaform.innerHTML=''
+		remform.onclick=null
+		remform.onmouseover=null
+		remform.onmouseout=null
+		remform.innerHTML=''
+		lslistHTML=''
+		for(i in LSPAR.list){
+			if(LSPAR.list[i]==LSPAR.key){
+				lslistHTML+='<a id=listitem selected>'+LSPAR.list[i]+'</a><br>'
+			}else{
+				lslistHTML+='<a id=listitem>'+LSPAR.list[i]+'</a><br>'
+			}
+		}
+		chaform.innerHTML='<div wrap form><div id=lslist>'+lslistHTML+'</div><hr>Add New Paradigm <input i id=inp><hr>Select from list or Add a new set of links (a "paradigm")</div>'
+		imap={}//keymap for the i element
+		inp.onkeydown=inp.onkeyup=function(e){
+			imap[e.keyCode]=e.type=='keydown'?true:false
+			if(imap[13]){//ENTER
+				LSPAR.key=inp.value
+				LSPAR.list[inp.value]=inp.value
+				localStorage['LSPAR']=JSON.stringify(LSPAR)
+				location.reload()
+			}
+		}
+		if(listitem[1]){//so it only works with multiple items
+			for(i in listitem){
+				listitem[i].onclick=function(e){
+					if(e.target.innerHTML.match('<')==null){
+						LSPAR.key=e.target.innerHTML
+						LSPAR.list[e.target.innerHTML]=e.target.innerHTML
+						localStorage['LSPAR']=JSON.stringify(LSPAR)
+						location.reload()
+					}
+				}
+			}
+		}
+	}
+	remform.onmouseover=function(){
+		a=function(an){remform.innerHTML=an}
+		af=[
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'['+genC(6)+' '+genC(3)+']',
+			'[R'+genC(5)+' '+genC(3)+']',
+			'[RE'+genC(4)+' '+genC(3)+']',
+			'[REM'+genC(3)+' '+genC(3)+']',
+			'[REMO'+genC(2)+' '+genC(3)+']',
+			'[REMOV'+genC(1)+' '+genC(3)+']',
+			'[REMOVE '+genC(3)+']',
+			'[REMOVE K'+genC(2)+']',
+			'[REMOVE KE'+genC(1)+']',
+			'[REMOVE KEY]',
+		]
+		t=0
+		s=25
+		for(i in af){
+			t+=s
+			setTimeout('a("'+af[i]+'")',t)
+		}
+	}
+	remform.onmouseout=function(){
+		setTimeout('remform.innerHTML=\'[&ndash;]\'',t+1)
+	}
+	remform.onclick=REM=function(){
+		addform.onclick=null
+		addform.onmouseover=null
+		addform.onmouseout=null
+		addform.innerHTML=''
+		chaform.onclick=null
+		chaform.onmouseover=null
+		chaform.onmouseout=null
+		chaform.innerHTML=''
+		remform.onclick=null
+		remform.onmouseover=null
+		remform.onmouseout=null
+		remform.innerHTML=''
+		lslistHTML=''
+		for(i in LSPAR.list){
+			if(LSPAR.list[i]==LSPAR.key){
+				lslistHTML+='<a id=listitem selected>'+LSPAR.list[i]+'</a><br>'
+			}else{
+				lslistHTML+='<a id=listitem>'+LSPAR.list[i]+'</a><br>'
+			}
+		}
+		remform.innerHTML='<div wrap form><div id=lslist>'+lslistHTML+'</div><hr>Select the Paradigm to remove with your mouse<hr>This can be cancelled with a refresh</div>'
+		if(listitem[1]){
+			for(i in listitem){
+				listitem[i].onclick=function(e){
+					try{
+						localStorage.removeItem(e.target.innerHTML)
+						delete LSPAR.list[e.target.innerHTML]
+						localStorage['LSPAR']=JSON.stringify(LSPAR)
+						location.reload()
+					}catch(e){
+						alert('Bad selection')
+					}
+				}
+			}
+		}
+	}
+	EDIT=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.link=prompt('Enter New Link',LINK.link)
+		LINK.title=prompt('Enter New Title',LINK.title)
+		Links[LSKEY+'.'+KEY]=LINK
+		localStorage[LSPAR.key]=JSON.stringify(Links)
+		location.reload()
+	}
+	REMOVE=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.removed=true
+		Links[LSKEY+'.'+KEY]=LINK
+		localStorage[LSPAR.key]=JSON.stringify(Links)
+		location.reload()
+	}
+	RESTORE=function(KEY){
+		LINK=Links[LSKEY+'.'+KEY]
+		LINK.link=prompt('Enter New Link',LINK.link)
+		LINK.title=prompt('Enter New Title',LINK.title)
+		LINK.removed=false
+		Links[LSKEY+'.'+KEY]=LINK
+		localStorage[LSPAR.key]=JSON.stringify(Links)
+		location.reload()
+	}
+	PERMADEL=function(KEY){
+		alert('For the sake of ease of use, do not permanently delete a link unless it is at the TOP of the list, swap if you must.')
+		if(!confirm('Are you sure you wand to PERMANENTLY DELETE the link, "'+(Links[LSKEY+'.'+KEY].title)+'" (#'+KEY+')?\n\nYou CANT get this back.')){return false}
+		delete Links[LSKEY+'.'+KEY]
+		Links[LSKEY+'s']=Links[LSKEY+'s']-1
+		localStorage[LSPAR.key]=JSON.stringify(Links)
+		location.reload()
+	}
+	ADDLINK=function(){
+		Links[LSKEY+'s']=Links[LSKEY+'s']+1
+		localStorage[LSPAR.key]=JSON.stringify(Links)
+		location.reload()
+	}
+	SUBLINK=function(){
+		Links[LSKEY+'s']=Links[LSKEY+'s']-1
+		localStorage[LSPAR.key]=JSON.stringify(Links)
+		location.reload()
+	}
+	CLEAR=function(){
+		if(!confirm('Are you Sure?')){
+			return false
+		}else if(!confirm('Are you SURE?')){
+			return false
+		}
+		localStorage.removeItem(LSPAR.key)
+		location.reload()
+	}
+	SWAPLINKS=function(){
+		alert('click the two links you want to swap')
+		addform.onclick=null
+		onclick=function(e){
+			try{
+				id1=e.target.innerHTML
+				if(isNaN(parseInt(id1)) && ((id1.match(/REMOVE/) && id1.match(/EDIT/))||id1.match(/RESTORE/)) && !id1.match(/div wrap/i)){
+					id1=RegExp('<small>([0-9]*)</small>').exec(id1)[1]
+				}
+				LINK1=Links[LSKEY+'.'+id1]
+			}catch(e){
+				alert('invalid selection')
+				onclick=null
+				return false
+			}
+			onclick=function(e){
+				try{
+					id2=e.target.innerHTML
+					if(isNaN(parseInt(id2)) && ((id2.match(/REMOVE/) && id2.match(/EDIT/))||id2.match(/RESTORE/)) && !id1.match(/div wrap/i)){
+						id2=RegExp('<small>([0-9]*)</small>').exec(id2)[1]
+					}
+					LINK2=Links[LSKEY+'.'+id2]
+					if(id1==id2){
+						alert('can not swap link with itself')
+						onclick=null
+						return false
+					}
+				}catch(e){
+					alert('invalid selection')
+					onclick=null
+					return false
+				}
+				onclick=null
+				if(!confirm('The following is your selection:\n\n'+id1+':'+(LINK1.removed?'[Removed Link]':LINK1.title)+'\n'+id2+':'+(LINK2.removed?'[Removed Link]':LINK2.title)+'\n\nIs this correct?')){
+					return false
+				}
+				Links[LSKEY+'.'+id1]=LINK2
+				Links[LSKEY+'.'+id2]=LINK1
+				localStorage[LSPAR.key]=JSON.stringify(Links)
+				location.reload()
+			}
+		}
+	}
+	links=Links[LSKEY+'s']||1//it starts at 1, but unfortunately, the links var will always be one more than the actual length as consequence of starting the loop at i=1
+	//WRITE START
+	//WRITE START
+	//WRITE START
+	//WRITE START
+	//WRITE START
+	for(i=1;i<links;i++){
+		try{
+			LINK=Links[LSKEY+'.'+i]
+			if(!LINK.removed){
+				div.innerHTML=(
+					'<hr><p link title="'+i+'" draggable=true>'+
+					'<small>'+i+'</small> '+
+					'<a target="_blank" href="'+LINK.link+'">'+LINK.title+'</a> '+
+					'[<a href="javascript:EDIT('+i+')">EDIT</a>] '+
+					'[<a href="javascript:REMOVE('+i+')">REMOVE</a>]'+
+					'</p>'
+				)+div.innerHTML
+			}else{//removed flag set to true
+				div.innerHTML=(
+					'<hr><p link title="'+i+'" draggable=true>'+
+					'<small>'+i+'</small> '+
+					'<b>REMOVED</b> '+ 
+					'[<a href="javascript:RESTORE('+i+')">RESTORE</a>]'+
+					'[<a href="javascript:PERMADEL('+i+')" title="permanently deletes link">DELETE</a>]'+
+					'</p>'
+				)+div.innerHTML
+			}
+		}catch(e){
+			div.innerHTML='<hr><p link>No Data</p>'+div.innerHTML
+		}
+	}
+	div.innerHTML=div.innerHTML.replace('<hr>','')
+	document.title=LSPAR.key+' Saver'
+	//if(links==0){
+	if(!Links[LSKEY+'.'+1]&&links<2){//if no first link
+		div.innerHTML='<h1 fresh>No Links<hr><a href="javascript:ADD()">Add One</a></h1>'
+		botrow.innerHTML='<center>Add a link to activate these options</center>'
+		if(LSPAR.key=='Link'){//this probably means that the user is new and needs a tutorial
+			wrapper.style.width='1000px'
+			toprow.innerHTML='<center>'+toprow.innerHTML+'<hr><h1>Welcome to the Link Saver App</h1><hr>Use the above options to add links, and to change and remove link sets</center><hr><span class=c1>Button</span><span class=c2>Description</span><span class=c3>Shortcut</span><br><span class=c1>[+]</span><span class=c2>Adds a new link to current set</span><span class=c3>CTRL+SHIFT+A</span><br><span class=c1>[~]</span><span class=c2>Changes the link set, referred to here as a "Paradigm"</span><span class=c3>CTRL+SHIFT+C</span><br><span class=c1>[&ndash;]</span><span class=c2>Deletes a link set and all associated data</span><span class=c3>CTRL+SHIFT+R</span>'
+		}else{
+			toprow.innerHTML='<center>'+toprow.innerHTML+'</center>'
+		}
+	}
+	//WRITE END
+	//WRITE END
+	//WRITE END
+	//WRITE END
+	//WRITE END
+	genC=function(l){
+		return gen(l,'QWERTYUIOPASDFGHJKLZXCVBNM')
+	}
+	gen=function(l,chars){
+		R=function(){return Math.floor(Math.random()*10).toString()}
+		R2=function(){return parseInt(R()+R())}
+		l=l||10
+		chars=chars||'0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_-'
+		str=''
+		for(i=0;i<l;i++){
+			str+=chars[R2()]||chars[R2()]||chars[R2()]||chars[R2()]||chars[R2()]||chars[0]
+		}
+		return str
+	}
+	map={}
+	onkeydown=onkeyup=function(e){
+		map[e.keyCode]=e.type=='keydown'?true:false
+		if(map[17]&&map[16]&&map[65]){//CTRL+SHIFT+A
+			ADD()
+			map={}
+			return false
+		}else if(map[17]&&map[16]&&map[67]){//CTRL+SHIFT+C
+			CHA()
+			map={}
+			return false
+		}else if(map[17]&&map[16]&&map[82]){//CTRL+SHIFT+R
+			REM()
+			map={}
+			return false
+		}else if(map[17]&&map[16]&&map[83]){//CTRL+SHIFT+S
+			SWAPLINKS()
+			map={}
+			return false
+		}else if(map[16]&&map[187]){//SHIFT++
+			ADDLINK()
+			map={}
+			return false
+		}else if(map[16]&&map[189]){//SHIFT+-
+			SUBLINK()
+			map={}
+			return false
+		}
+	}
+	ondragstart=function(e){
+		l1=e.target.title
+	}
+	ondragenter=function(e){
+		l2=e.target.title
+		if(l1!=l2 && l1!='' && l2!='' && l1.match(/[0-9]*/) && l2.match(/[0-9]*/)){
+			link1=Links['link.'+l1]
+			link2=Links['link.'+l2]
+			Links['link.'+l1]=link2
+			Links['link.'+l2]=link1
+			localStorage[LSPAR.key]=JSON.stringify(Links)
+			location.reload()
+		}
+	}
+	RCOL=function(){//random color
+		R=function(){return Math.floor(Math.random()*10)}//0-9
+		cols=['#335','#337','#353','#373','#533','#733','#377','#ccc','#333','#aaa']
+		document.body.style.backgroundColor=cols[R()]
+	}
+	RCOLFLAG?RCOL():null
+}
+</script>
+<style>
+body{
+	background:#335;
+	font:16px arial black;
+}
+div[wrap]{
+	background:#ddd;
+	width:700px;
+	box-shadow:#000 2px 2px 3px;
+	border:2px solid black;
+	margin:10px auto;
+	padding:10px;
+}
+div[wrap][form]{
+	width:650px;
+	background:#eee;
+}
+input[i]{
+	background:#eee;
+	border:none;
+	border-bottom:2px solid black;
+	margin:0px 15px;
+}
+hr[b]{
+	height:5px;
+	background:#aaa;
+}
+h1[fresh]{
+	width:300px;
+	background:#ccc;
+	margin:10px auto;
+	padding:10px;
+	text-align:center;
+	border:2px solid #333;
+	box-shadow:#000 2px 2px 3px;
+}
+div#div{
+	max-height:400px;
+	overflow-y:auto;
+	padding:5px;
+}
+div#div::-webkit-scrollbar{
+	width:10px;
+	height:10px;
+}
+div#div::-webkit-scrollbar-thumb{
+	background:none;
+}
+div#div:hover::-webkit-scrollbar-thumb{
+	background:#999;
+}
+p[link]{
+	margin:-5px 0px;
+	padding:0px 5px;
+	cursor:hand;
+	white-space:nowrap;
+	max-width:650px;
+	overflow-x:scroll;
+}
+p[link]:hover{
+	background:#eee;
+}
+p[link]::-webkit-scrollbar{
+	width:7px;
+	height:7px;
+}
+p[link]::-webkit-scrollbar-thumb{
+	background:none;
+}
+p[link]:hover::-webkit-scrollbar-thumb{
+	background:#999;
+}
+input[clr]{
+	background:#ccc;
+	font:18px arial black;
+	padding:5px 10px;
+	cursor:hand;
+	width:80px;
+}
+input[clr]:hover{
+	background:#ddd;
+}
+div[topbutton]{
+	cursor:hand;
+	background:#ddd;
+	display:inline-block;
+	padding:5px 10px;
+}
+div[topbutton]:hover{
+	background:#eee;
+}
+div[bottomlinks]{
+	font:18px arial black;
+	display:inline-block;
+	margin:0px 5px;
+	padding:5px;
+	height:32px;
+	border-left:2px solid #333;
+	position:relative;
+	bottom:3px;
+}
+a[href]{
+	color:#00f;
+	text-decoration:none;
+}
+a[href]:hover{
+	color:#0ce;
+}
+#listitem{
+	cursor:hand;
+}
+#listitem[selected]{
+	color:#0a0;
+}
+#listitem[selected]:before{
+	content:'>';
+	color:#050;
+}
+#listitem:hover{
+	color:#00f;
+}
+/*column1,2,and 3*/
+h1{
+	margin-top:-5px;
+	margin-bottom:-5px;
+}
+span.c1{
+	display:inline-block;
+	width:200px;
+	height:30px;
+	margin-left:20px;
+}
+span.c2{
+	display:inline-block;
+	width:600px;
+}
+span.c3{
+	display:inline-block;
+	width:100px;
+
+}
+small{
+	display:inline-block;
+	width:20px;
+	border-right:2px solid #999;
+	margin-right:0px;
+}
+</style>

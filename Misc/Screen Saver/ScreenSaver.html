@@ -1,0 +1,163 @@
+<style>
+*{
+    margin:0;
+    padding:0;
+}
+canvas{
+    width:100%;
+    height:100%;
+}
+</style>
+<div container></div>
+<script>
+    
+$$ = function(){
+    return document.querySelectorAll.apply(document,arguments);
+}
+var W = 250, H = 250;
+//Canvas 1 (not in DOM)
+canvas = document.createElement('canvas');
+canvas.width = W;
+canvas.height = H;
+ctx = canvas.getContext('2d');
+//Canvas 2 (not in DOM)
+canvas2 = document.createElement('canvas');
+canvas2.width = W;
+canvas2.height = H;
+ctx2 = canvas2.getContext('2d');
+//Canvas 3 (not in DOM)
+canvas3 = document.createElement('canvas');
+canvas3.width = W;
+canvas3.height = H;
+ctx3 = canvas3.getContext('2d');
+//Canvas 4 (not in DOM)
+canvas4 = document.createElement('canvas');
+canvas4.width = W;
+canvas4.height = H;
+ctx4 = canvas4.getContext('2d');
+//Canvas 5 (in DOM; acts as display)
+$$('div[container]')[0].appendChild((function(){
+    canvas5 = document.createElement('canvas');
+    canvas5.width = W*2;
+    canvas5.height = H*2;
+    ctx5 = canvas5.getContext('2d');
+    return canvas5;
+})());
+var fps = 60, mouse = [0,0], mouseDown = false, particles = [];
+doImgData = function(){
+    //Canvas 2
+    var data, ImgData = ctx.getImageData(0,0,W,H);
+    data = ImgData.data;
+    for(var i=0;i<data.length;i+=4){
+        data[i+0]=Math.random()<.5?0:data[i];
+        data[i+1]=Math.random()<.5?0:data[i+1];
+        data[i+2]=Math.random()<.5?0:data[i+2];
+        data[i+3]=255;
+    }
+    ctx2.putImageData(ImgData,0,0);
+    //Canvas 3
+    ImgData = ctx.getImageData(0,0,W,H);
+    data = ImgData.data;
+    for(var i=0;i<data.length;i+=4){
+        data[i+0]=0;
+        data[i+1]=data[i+1];
+        data[i+2]=0;
+    }
+    ctx3.putImageData(ImgData,0,0);
+    ctx3.beginPath();
+    for(var i=0;i<H;i+=2){
+        ctx3.moveTo(0,i+.5);
+        ctx3.lineTo(W,i+.5);
+    }
+    ctx3.stroke();
+    ctx3.closePath();
+    //Canvas 4
+    ImgData = ctx.getImageData(0,0,W,H);
+    data = ImgData.data;
+    for(var i=0;i<data.length;i+=4){
+        data[i+0]=0;
+        data[i+1]=0;
+        data[i+2]=data[i+2];
+    }
+    ctx4.putImageData(ImgData,0,0);
+    //canvas 5
+    var Img1,Img2,Img2,Img4;
+    Img1 = ctx.getImageData(0,0,W,H);
+    Img2 = ctx2.getImageData(0,0,W,H);
+    Img3 = ctx3.getImageData(0,0,W,H);
+    Img4 = ctx4.getImageData(0,0,W,H);
+    ctx5.putImageData(Img1,0,0);
+    ctx5.putImageData(Img2,W,0);
+    ctx5.putImageData(Img3,0,H);
+    ctx5.putImageData(Img4,W,H);
+}
+doParticles = function(){
+    for(var i in particles){
+        var p = particles[i];
+        p.x+=p.v[0];
+        p.y+=p.v[1];
+        if(p.x>W&&p.v[0]>0){
+            p.v[0]=-p.v[0];
+            p.v[0]+=5;
+        }
+        if(p.x<0&&p.v[0]<0){
+            p.v[0]=-p.v[0];
+            p.v[0]-=5;
+        }
+        if(p.y>H&&p.v[1]>0){
+            p.v[1]=-p.v[1];
+            p.v[1]+=5;
+        }
+        if(p.y<0&&p.v[1]<0){
+            p.v[1]=-p.v[1];
+            p.v[1]-=5;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = p.c;
+        ctx.arc(p.x,p.y,p.s/2,Math.PI*2,false);
+        ctx.fill();
+        ctx.closePath();
+        if((p.v[0]<1&&p.v[0]>-1)||(p.v[1]<1&&p.v[1]>-1)||p.x<-10||p.x>W+10||p.y<-10||p.y>H+10){//out of bounds/too slow
+            delete particles[i];
+        }
+    }
+}
+
+Particle = function(pos){
+    this.x = pos[0];
+    this.y = pos[1];
+    with(Math){
+        var RC = function(){return floor(random()*255<<1)}
+        this.v = [random()<.5?-random()*10:random()*10,random()<.5?-random()*10:random()*10];//velocity
+        this.c = 'rgb('+RC()+','+RC()+','+RC()+')';//color
+        this.s = floor(random()*10);//size
+    }
+}
+doGarbage = function(){
+    var arr2 = [];
+    for(var j in particles){
+        if(particles[j]){
+            arr2.push(particles[j]);
+        }
+    }
+    particles = [];
+    for(j in arr2){
+        particles.push(arr2[j]);
+    }
+}
+UPDATE = function(){
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0,0,W,H);
+    doParticles();
+    doImgData();
+    doGarbage();
+}
+setInterval(UPDATE,1000/fps);
+setInterval(function(){
+    var X=Math.random()*W, Y=Math.random()*H;
+    for(var k=0;k<100;k++){
+        particles.push(new Particle([X,Y]))
+    }
+},3000)
+    
+</script>
