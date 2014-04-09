@@ -4,4 +4,4 @@ Back when koding was still in beta, I made a bunch of projects and tested them h
 
 ## This is the gh-pages branch
 
-url: http://b1kmusic.kd.github.io
+url: bradens-stuff.github.io/b1kmusic.koding.com
